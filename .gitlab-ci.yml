@@ -21,4 +21,4 @@ deploy_to_repository:
    - if ($ToPublish) {$ToPublish | % {Publish-Module -Path $_.ModuleBase -NuGetApiKey $NuGetApiKey -Repository $PSRepositoryName}} else {throw "No recent versions of the modules were found $ShowDiff"}
    - (Get-Date).ToString('o')
   tags: 
-    - APP1
+    - APP
