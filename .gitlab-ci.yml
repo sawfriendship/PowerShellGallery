@@ -9,7 +9,7 @@ deploy_to_repository:
    - whoami.exe
    - $PSVersionTable
    - (Get-Date).ToString('o')
-   - Get-PSRepository
+   - Get-PSRepository | ft Name,SourceLocation
    - $Location = Get-Location
    - $Location
    - $PublishedModules = Find-Module -Repository $PSRepositoryName | % -Begin {$h=@{}} -Process {$h[$_.Name] = $_.Version} -End {$h}
@@ -21,4 +21,4 @@ deploy_to_repository:
    - if ($ToPublish) {$ToPublish | % {Publish-Module -Path $_.ModuleBase -NuGetApiKey $NuGetApiKey -Repository $PSRepositoryName}} else {throw "No recent versions of the modules were found $ShowDiff"}
    - (Get-Date).ToString('o')
   tags: 
-    - APP
+    - APP1
