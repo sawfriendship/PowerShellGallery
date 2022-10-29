@@ -6,6 +6,7 @@ deploy_to_repository:
   only:
     - main
   script: 
+   - chcp 65001
    - whoami.exe
    - $PSVersionTable
    - (Get-Date).ToString('o')

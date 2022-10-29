@@ -12,7 +12,7 @@
 RootModule = 'SqlQueryHelper.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.1'
+ModuleVersion = '1.0.2'
 
 # ID used to uniquely identify this module
 GUID = '8b846600-abe7-41e5-98ee-4438b70463f0'
