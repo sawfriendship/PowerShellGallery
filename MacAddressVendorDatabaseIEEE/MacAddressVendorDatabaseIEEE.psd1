@@ -12,7 +12,7 @@
 RootModule = 'MacAddressVendorDatabaseIEEE.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.1.3'
+ModuleVersion = '1.1.4'
 
 # ID used to uniquely identify this module
 GUID = '6c14e944-b813-4a47-b006-eed858f34582'
@@ -28,12 +28,12 @@ Copyright = 'Saw-Friendship'
 
 # Description of the functionality provided by this module
 Description = @'
-THIS MODULE IS DEPRECATED! Use the "MacAddressVendor".
+THIS MODULE IS DEPRECATED! Use module "MacAddress".
 Get Hardware Vendor by MacAddress.
 Contains Database from IEEE site for offline using.
 Use Update-MacAddressDatabase commandlet for update Database
 --------------------------
-Этот скрипт устарел. Используйте модуль MacAddressVendor.
+Этот скрипт устарел. Используйте модуль MacAddress.
 '@
 
 
