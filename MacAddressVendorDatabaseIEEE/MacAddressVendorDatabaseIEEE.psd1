@@ -12,7 +12,7 @@
 RootModule = 'MacAddressVendorDatabaseIEEE.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.1.1'
+ModuleVersion = '1.1.2'
 
 # ID used to uniquely identify this module
 GUID = '6c14e944-b813-4a47-b006-eed858f34582'
@@ -21,7 +21,7 @@ GUID = '6c14e944-b813-4a47-b006-eed858f34582'
 Author = 'Saw-Friendship'
 
 # Company or vendor of this module
-CompanyName = ''
+# CompanyName = ''
 
 # Copyright statement for this module
 Copyright = 'Saw-Friendship'
@@ -72,10 +72,10 @@ FunctionsToExport = '*'
 # CmdletsToExport = ''
 
 # Variables to export from this module
-VariablesToExport = '*'
+# VariablesToExport = '*'
 
 # Aliases to export from this module
-AliasesToExport = '*'
+# AliasesToExport = '*'
 
 # List of all modules packaged with this module
 # ModuleList = @()
