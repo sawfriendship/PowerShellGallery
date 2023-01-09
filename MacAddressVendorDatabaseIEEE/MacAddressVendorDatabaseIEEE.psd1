@@ -12,7 +12,7 @@
 RootModule = 'MacAddressVendorDatabaseIEEE.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.1.2'
+ModuleVersion = '1.1.3'
 
 # ID used to uniquely identify this module
 GUID = '6c14e944-b813-4a47-b006-eed858f34582'
@@ -27,7 +27,15 @@ Author = 'Saw-Friendship'
 Copyright = 'Saw-Friendship'
 
 # Description of the functionality provided by this module
-Description = 'Get Hardware Vendor by MacAddress. Contains Database from IEEE site for offline using. Use Update-MacAddressDatabase commandlet for update Database'
+Description = @'
+THIS MODULE IS DEPRECATED! Use the "MacAddressVendor".
+Get Hardware Vendor by MacAddress.
+Contains Database from IEEE site for offline using.
+Use Update-MacAddressDatabase commandlet for update Database
+--------------------------
+Этот скрипт устарел. Используйте модуль MacAddressVendor.
+'@
+
 
 # Minimum version of the Windows PowerShell engine required by this module
 PowerShellVersion = '3.0'
