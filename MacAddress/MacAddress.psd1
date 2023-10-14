@@ -12,7 +12,7 @@
 	RootModule = 'MacAddress.psm1'
 
 	# Version number of this module.
-	ModuleVersion = '1.2.1'
+	ModuleVersion = '1.2.2'
 
 	# ID used to uniquely identify this module
 	GUID = 'ee2dd8a5-8439-4156-8073-583864eb2d25'
