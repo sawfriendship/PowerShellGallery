@@ -29,6 +29,6 @@ deploy_to_repository:
     if ($ToPublish) {$ToPublish | % {Publish-Module -Path $_.ModuleBase -NuGetApiKey $NuGetApiKey -Repository $PSRepositoryName}} else {throw "No recent versions of the modules were found $ShowDiff"}
     (Get-Date).ToString('o')
   rules:
-    if: $CI_COMMIT_TITLE =~ /-publish$/
+    if: '$CI_COMMIT_TITLE =~ /-publish$/'
   tags: 
     - APP
