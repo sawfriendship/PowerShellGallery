@@ -12,7 +12,7 @@
 	RootModule = 'MacAddress.psm1'
 
 	# Version number of this module.
-	ModuleVersion = '1.2.2'
+	ModuleVersion = '2.0.0'
 
 	# ID used to uniquely identify this module
 	GUID = 'ee2dd8a5-8439-4156-8073-583864eb2d25'
@@ -33,7 +33,7 @@
 	FunctionsToExport = '*-*'
 
 	# Aliases to export from this module
-	AliasesToExport = '*'
+	AliasesToExport = '*-*'
 
 	# Minimum version of the Windows PowerShell engine required by this module
 	# PowerShellVersion = ''

@@ -27,25 +27,22 @@ Function Get-MacAddressVendor {
 	192.168.0.51  00155d003200     Microsoft Corporation
 	192.168.0.1   588bf34b5e10     ZyXEL Communications Corporation
 #>
+	[CmdletBinding()]
 	param(
 		[CmdletBinding()]
 		[Parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
 		[Alias('LinkLayerAddress','PhysicalAddress','ClientId','Mac','MacAddress')]
 		[ValidateScript({$_ -replace '[^0-9a-f]' -match '^$|^([0-9a-f]{6})([0-9a-f]{6})?$'})]
 		[AllowEmptyString()]
-		[System.String[]]$InputObject,
-		[switch]$PassThru
+		[System.String[]]$InputObject
 	)
-	
 	begin {}
-	
 	process {
 		$InputObject | % {
 			$MAC = ("$_") -replace '[^0-9a-f]' -replace '(?<=[0-9a-f]{6}).+'
 			$MacAddressDatabase[$MAC.ToUpper()]
 		}
 	}
-	
 	end {}
 }
 
@@ -97,3 +94,5 @@ Function Import_MacAddressDatabase {
 }
 
 Import_MacAddressDatabase
+
+Set-Alias -Name 'Resolve-MacAddress' -Value 'Get-MacAddressVendor'
