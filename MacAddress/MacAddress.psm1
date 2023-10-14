@@ -28,37 +28,25 @@ Function Get-MacAddressVendor {
 	192.168.0.1   588bf34b5e10     ZyXEL Communications Corporation
 #>
 	param(
-		[Parameter(Mandatory=$true,ValueFromPipeline=$true)]$InputObject,
+		[CmdletBinding()]
+		[Parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)]
+		[Alias('LinkLayerAddress','PhysicalAddress','ClientId','Mac','MacAddress')]
+		[ValidateScript({$_ -replace '[^0-9a-f]' -match '^$|^([0-9a-f]{6})([0-9a-f]{6})?$'})]
+		[AllowEmptyString()]
+		[System.String[]]$InputObject,
 		[switch]$PassThru
 	)
-	Begin{
-		Function Resolve-MacAddress {
-		param(
-			[Parameter(Mandatory=$true,ValueFromPipeline=$true,ValueFromPipelineByPropertyName=$true)][alias('LinkLayerAddress','PhysicalAddress','ClientId')][AllowEmptyString()][string[]]$MAC
-		)
-		Begin {}
-		Process {
-			$MAC | % {
-				$MAC6 = [string]''
-				$MAC6 = $_.ToUpper() -replace '[^\w\d]' -replace '(......)(.+)','$1'
-					if( ($MAC6 -match '^[\d\w]{6}$') -and  ($MAC6 -notmatch '^(0){6}$') -and ($MAC6 -notmatch '^(f){6}$')) {
-						$MacAddressDatabase[$MAC6]
-					}
-			}
-		}
-		End {}
-		}
-	}
-	Process{
+	
+	begin {}
+	
+	process {
 		$InputObject | % {
-			if (![bool]$PassThru) {
-				$($_ | Resolve-MacAddress)
-			} else {
-				Add-Member -InputObject $_ -MemberType NoteProperty -Name 'Vendor' -Value $($_ | Resolve-MacAddress) -Force -PassThru
-			}
+			$MAC = ("$_") -replace '[^0-9a-f]' -replace '(?<=[0-9a-f]{6}).+'
+			$MacAddressDatabase[$MAC.ToUpper()]
 		}
 	}
-	End{}
+	
+	end {}
 }
 
 Function Update-MacAddressDatabase {
@@ -87,7 +75,7 @@ Function Update-MacAddressDatabase {
 		,@{Name = 'Country'; Expression = {if ($_.Vendor -ne 'Private') {$_.Context.PostContext[2].Trim()} else {''}}}
 		,@{Name = 'Address'; Expression = {if ($_.Vendor -ne 'Private') {$_.Context.PostContext[0].Trim()} else {''}}}
 		,@{Name = 'POBox'; Expression = {if ($_.Vendor -ne 'Private') {$_.Context.PostContext[1].Trim()} else {''}}}
-	) | % {
+	) | ? {$_.MacAddress -ne '000000'} | % {
 		$_.PSTypeNames.Add('MacAddress')
 		$MacAddressDatabase[$_.MacAddress] = $_
 	}
