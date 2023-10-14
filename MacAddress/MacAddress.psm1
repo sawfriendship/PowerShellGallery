@@ -1,57 +1,31 @@
-$MacAddressDatabase = [System.Collections.Generic.Dictionary[System.String,System.Object]]::new()
+[string]$Uri = 'http://standards-oui.ieee.org/oui.txt'
+[System.Collections.Generic.Dictionary[System.String,System.Object]]$MacAddressDatabase = @{}
+
+[string]$OuiFilePath =  Join-Path -Path $PSScriptRoot -ChildPath 'oui.txt'
+[string]$CsvFilePath =  Join-Path -Path $PSScriptRoot -ChildPath 'oui.csv'
+
+$ProgressPreference_ = $ProgressPreference
+	
 Update-TypeData -Force -TypeName 'MacAddress' -MemberType ScriptMethod -MemberName ToString -Value {$this.Vendor}
-
-Function Update-MacAddressDatabase {
-    [string]$Uri = 'http://standards-oui.ieee.org/oui.txt'
-
-    $OuiFilePath =  Join-Path -Path $PSScriptRoot -ChildPath 'oui.txt'
-    $CsvFilePath =  Join-Path -Path $PSScriptRoot -ChildPath 'oui.csv'
-	
-    try {Invoke-WebRequest -Uri $Uri -OutFile $OuiFilePath} catch {throw $_.Exception}
-	
-	$OuiFile = Select-String -Path $OuiFilePath -Pattern '[0-9a-fA-F]{6}\s*\(base\s*16\).*' -Context 3 | Select-Object -Property @(
-		,@{Name = 'MacAddress'; Expression = {$_.Line.ToUpper() -replace '\s*\(base\s*16\).*'}}
-		,@{Name = 'Vendor'; Expression = {$_.Line -replace '.*\s*\(base\s*16\)\s*'}}
-		,@{Name = 'Context'; Expression = {$_.Context.PostContext.Trim()}}
-	) | Select-Object -Property @(
-		,'MacAddress'
-		,'Vendor'
-		,@{Name = 'Country'; Expression = {$_.Context[2]}}
-		,@{Name = 'Address'; Expression = {$_.Context[0]}}
-		,@{Name = 'POBox'; Expression = {$_.Context[1]}}
-	)
-		
-	$OuiFile | Export-Csv -Delimiter ';' -NoTypeInformation -Path $CsvFilePath
-	
-	Import-MacAddressDatabase
-}
-
-Function Import-MacAddressDatabase {
-    $CsvFilePath = Join-Path -Path $PSScriptRoot -ChildPath 'oui.csv'
-	Import-Csv -Path $CsvFilePath -Delimiter ';' | % {
-		$_.PSTypeNames.Add('MacAddress')
-		$MacAddressDatabase[$_.MacAddress] = $_
-	}
-}
 
 Function Get-MacAddressVendor {
 <#
-.EXAMPLE
-Get-NetNeighbor -IPAddress 192* | Get-MacAddressVendor
-HTC Corporation
-Microsoft Corporation
-D-Link International
-ZyXEL Communications Corporation
-.EXAMPLE
-Get-NetNeighbor -IPAddress 192* | Get-MacAddressVendor -PassThru | Select-Object IPAddress,LinkLayerAddress,Vendor
-IPAddress    LinkLayerAddress Vendor
----------    ---------------- ------
-192.168.0.255 ffffffffffff
-192.168.0.106 1c659d7cb596     Liteon Technology Corporation
-192.168.0.101 000000000000
-192.168.0.92  f079606a3eda     Apple, Inc.
-192.168.0.51  00155d003200     Microsoft Corporation
-192.168.0.1   588bf34b5e10     ZyXEL Communications Corporation
+	.EXAMPLE
+	Get-NetNeighbor -IPAddress 192* | Get-MacAddressVendor
+	HTC Corporation
+	Microsoft Corporation
+	D-Link International
+	ZyXEL Communications Corporation
+	.EXAMPLE
+	Get-NetNeighbor -IPAddress 192* | Get-MacAddressVendor -PassThru | Select-Object IPAddress,LinkLayerAddress,Vendor
+	IPAddress    LinkLayerAddress Vendor
+	---------    ---------------- ------
+	192.168.0.255 ffffffffffff
+	192.168.0.106 1c659d7cb596     Liteon Technology Corporation
+	192.168.0.101 000000000000
+	192.168.0.92  f079606a3eda     Apple, Inc.
+	192.168.0.51  00155d003200     Microsoft Corporation
+	192.168.0.1   588bf34b5e10     ZyXEL Communications Corporation
 #>
 	param(
 		[Parameter(Mandatory=$true,ValueFromPipeline=$true)]$InputObject,
@@ -87,4 +61,51 @@ IPAddress    LinkLayerAddress Vendor
 	End{}
 }
 
-Import-MacAddressDatabase
+Function Update-MacAddressDatabase {
+	[CmdletBinding()]
+	param()
+
+	$ProgressPreference = 'SilentlyContinue'
+    
+	Write-Verbose -Message "Downloading from $Uri" -Verbose
+	
+	try {
+		Invoke-WebRequest -Uri $Uri -OutFile $OuiFilePath
+	} catch {
+		throw $_.Exception
+	}
+	
+	Write-Verbose -Message "Parsing raw file to $OuiFilePath" -Verbose
+	
+	Select-String -Path $OuiFilePath -Pattern '^(?<MAC>[0-9a-fA-F]{6})\s+\(base\s+16\)\s+(?<VEN>.+)' -Context 3 | Select-Object -Property @(
+		,@{Name = 'MacAddress'; Expression = {$_.Matches.Captures.Groups['MAC'].Value.ToUpper()}}
+		,@{Name = 'Vendor'; Expression = {$_.Matches.Captures.Groups['VEN'].Value}}
+		,'Context'
+	) | Select-Object -Property @(
+		,'MacAddress'
+		,'Vendor'
+		,@{Name = 'Country'; Expression = {if ($_.Vendor -ne 'Private') {$_.Context.PostContext[2].Trim()} else {''}}}
+		,@{Name = 'Address'; Expression = {if ($_.Vendor -ne 'Private') {$_.Context.PostContext[0].Trim()} else {''}}}
+		,@{Name = 'POBox'; Expression = {if ($_.Vendor -ne 'Private') {$_.Context.PostContext[1].Trim()} else {''}}}
+	) | % {
+		$_.PSTypeNames.Add('MacAddress')
+		$MacAddressDatabase[$_.MacAddress] = $_
+	}
+	
+	Write-Verbose -Message "Saving $($MacAddressDatabase.Count) records to $CsvFilePath" -Verbose
+	
+	$MacAddressDatabase.Values | Export-Csv -Delimiter ';' -NoTypeInformation -Path $CsvFilePath
+	
+	$ProgressPreference = $ProgressPreference_
+}
+
+Function Import_MacAddressDatabase {
+	[CmdletBinding()]
+	param()
+	Import-Csv -Path $CsvFilePath -Delimiter ';' | % {
+		$_.PSTypeNames.Add('MacAddress')
+		$MacAddressDatabase[$_.MacAddress] = $_
+	}
+}
+
+Import_MacAddressDatabase

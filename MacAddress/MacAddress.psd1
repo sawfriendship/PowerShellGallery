@@ -12,7 +12,7 @@
 	RootModule = 'MacAddress.psm1'
 
 	# Version number of this module.
-	ModuleVersion = '1.2.0'
+	ModuleVersion = '1.2.1'
 
 	# ID used to uniquely identify this module
 	GUID = 'ee2dd8a5-8439-4156-8073-583864eb2d25'
@@ -30,7 +30,7 @@
 	Description = 'Get Hardware Vendor by MacAddress. Contains Database from IEEE site for offline using. Use Update-MacAddressDatabase commandlet for update Database'
 
 	# Functions to export from this module
-	FunctionsToExport = '*'
+	FunctionsToExport = '*-*'
 
 	# Aliases to export from this module
 	AliasesToExport = '*'
@@ -72,7 +72,7 @@
 	# NestedModules = @()
 
 	# Cmdlets to export from this module
-	# CmdletsToExport = ''
+	CmdletsToExport = '*-*'
 
 	# Variables to export from this module
 	# VariablesToExport = '*'
