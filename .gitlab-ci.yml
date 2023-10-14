@@ -5,8 +5,6 @@ deploy_to_repository:
   stage: deploy
   only:
     - main
-  rules:
-    - if: $CI_COMMIT_TITLE =~ /-publish$/
   script: |
     chcp 65001
     whoami.exe
@@ -30,5 +28,7 @@ deploy_to_repository:
     $ToPublish = $diff | ? {$_.Version -gt $_.PublishedVersion}
     if ($ToPublish) {$ToPublish | % {Publish-Module -Path $_.ModuleBase -NuGetApiKey $NuGetApiKey -Repository $PSRepositoryName}} else {throw "No recent versions of the modules were found $ShowDiff"}
     (Get-Date).ToString('o')
+  rules:
+    - if: $CI_COMMIT_TITLE =~ /-publish$/
   tags: 
     - APP
