@@ -5,6 +5,8 @@ deploy_to_repository:
   stage: deploy
   only:
     - main
+  rules:
+    - if: '$CI_COMMIT_TITLE == "qwe"'
   script: |
     chcp 65001
     whoami.exe
