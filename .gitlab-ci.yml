@@ -5,6 +5,8 @@ deploy_to_repository:
   stage: deploy
   only:
     - main
+  rules:
+    - if: $CI_COMMIT_TITLE =~ /-publish$/
   script: |
     chcp 65001
     whoami.exe
@@ -18,9 +20,9 @@ deploy_to_repository:
     New-Object -TypeName PSCustomObject -Property $PSVersionTable | ft
     (Get-Date).ToString('o')
     Get-PSRepository | ft Name,SourceLocation
-    $Location = Get-Location
-    $Location
-    $ImportedModules = $Location | Get-ChildItem -Directory | % {Get-ChildItem -Path $_.FullName -Filter '*.psd1'} | % {Import-Module $_.FullName -Prefix 'zzz' -DisableNameChecking -PassThru -Force}
+    $LOCATION = Get-Location
+    $LOCATION
+    $ImportedModules = $LOCATION | Get-ChildItem -Directory | % {Get-ChildItem -Path $_.FullName -Filter '*.psd1'} | % {Import-Module $_.FullName -Prefix 'zzz' -DisableNameChecking -PassThru -Force}
     $PublishedModules = $ImportedModules | % {Find-Module -Repository $PSRepositoryName -Name $_.Name -ErrorAction SilentlyContinue} | % -Begin {$h=@{}} -Process {$h[$_.Name] = $_.Version} -End {$h}
     $diff = $ImportedModules | Select-Object -Property Name,Version,@{Name='PublishedVersion';Expression={if($PublishedModules.ContainsKey($_.Name)){$PublishedModules[$_.Name]}else{[System.Version]::new()}}},ModuleBase
     $ShowDiff = $diff | Select-Object Name,Version,PublishedVersion | Format-Table -AutoSize | Out-String
