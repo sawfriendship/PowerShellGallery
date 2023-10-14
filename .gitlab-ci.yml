@@ -8,8 +8,13 @@ deploy_to_repository:
   script: |
     chcp 65001
     whoami.exe
-    Get-Variable
-    ls env:\*
+    '-'*64
+    'VARS:'
+    Get-Variable -Name * | select Name,Value
+    '-'*64
+    'ENV:'
+    ls env:\* | select Name,Value
+    '-'*64
     New-Object -TypeName PSCustomObject -Property $PSVersionTable | ft
     (Get-Date).ToString('o')
     Get-PSRepository | ft Name,SourceLocation
