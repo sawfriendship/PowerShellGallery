@@ -3,8 +3,6 @@ stages:
 
 deploy_to_repository:
   stage: deploy
-  only:
-    - main
   script: |
     chcp 65001
     whoami.exe
