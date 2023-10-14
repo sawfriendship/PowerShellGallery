@@ -3,30 +3,30 @@ stages:
 
 deploy_to_repository:
   stage: deploy
+  only:
+    - main
+  script: |
+    chcp 65001
+    whoami.exe
+    '-'*64
+    'VARS:'
+    Get-Variable -Name * | select Name,Value
+    '-'*64
+    'ENV:'
+    ls env:\* | select Name,Value
+    '-'*64
+    New-Object -TypeName PSCustomObject -Property $PSVersionTable | ft
+    (Get-Date).ToString('o')
+    Get-PSRepository | ft Name,SourceLocation
+    $LOCATION = Get-Location
+    $LOCATION
+    $ImportedModules = $LOCATION | Get-ChildItem -Directory | % {Get-ChildItem -Path $_.FullName -Filter '*.psd1'} | % {Import-Module $_.FullName -Prefix 'zzz' -DisableNameChecking -PassThru -Force}
+    $PublishedModules = $ImportedModules | % {Find-Module -Repository $PSRepositoryName -Name $_.Name -ErrorAction SilentlyContinue} | % -Begin {$h=@{}} -Process {$h[$_.Name] = $_.Version} -End {$h}
+    $diff = $ImportedModules | Select-Object -Property Name,Version,@{Name='PublishedVersion';Expression={if($PublishedModules.ContainsKey($_.Name)){$PublishedModules[$_.Name]}else{[System.Version]::new()}}},ModuleBase
+    $ShowDiff = $diff | Select-Object Name,Version,PublishedVersion | Format-Table -AutoSize | Out-String
+    $ShowDiff
+    $ToPublish = $diff | ? {$_.Version -gt $_.PublishedVersion}
+    if ($ToPublish) {$ToPublish | % {Publish-Module -Path $_.ModuleBase -NuGetApiKey $NuGetApiKey -Repository $PSRepositoryName}} else {throw "No recent versions of the modules were found $ShowDiff"}
+    (Get-Date).ToString('o')
   tags: 
     - APP
-  rules:
-    - if: '$CI_COMMIT_TITLE =~ /^publish/'
-  script:
-    - chcp 65001
-    - whoami.exe
-    - '-'*64
-    - 'VARS:'
-    - Get-Variable -Name * | select Name,Value
-    - '-'*64
-    - 'ENV:'
-    - ls env:\* | select Name,Value
-    - '-'*64
-    - New-Object -TypeName PSCustomObject -Property $PSVersionTable | ft
-    - (Get-Date).ToString('o')
-    - Get-PSRepository | ft Name,SourceLocation
-    - $LOCATION = Get-Location
-    - $LOCATION
-    - $ImportedModules = $LOCATION | Get-ChildItem -Directory | % {Get-ChildItem -Path $_.FullName -Filter '*.psd1'} | % {Import-Module $_.FullName -Prefix 'zzz' -DisableNameChecking -PassThru -Force}
-    - $PublishedModules = $ImportedModules | % {Find-Module -Repository $PSRepositoryName -Name $_.Name -ErrorAction SilentlyContinue} | % -Begin {$h=@{}} -Process {$h[$_.Name] = $_.Version} -End {$h}
-    - $diff = $ImportedModules | Select-Object -Property Name,Version,@{Name='PublishedVersion';Expression={if($PublishedModules.ContainsKey($_.Name)){$PublishedModules[$_.Name]}else{[System.Version]::new()}}},ModuleBase
-    - $ShowDiff = $diff | Select-Object Name,Version,PublishedVersion | Format-Table -AutoSize | Out-String
-    - $ShowDiff
-    - $ToPublish = $diff | ? {$_.Version -gt $_.PublishedVersion}
-    - if ($ToPublish) {$ToPublish | % {Publish-Module -Path $_.ModuleBase -NuGetApiKey $NuGetApiKey -Repository $PSRepositoryName}} else {throw "No recent versions of the modules were found $ShowDiff"}
-    - (Get-Date).ToString('o')
