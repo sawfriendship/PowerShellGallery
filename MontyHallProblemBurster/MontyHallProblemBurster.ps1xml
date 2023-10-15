@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Configuration>
+    <ViewDefinitions>
+		
+		<!-- ################ TABLE DEFINITIONS ################ -->
+        <View>
+            <Name>MontyHall.Stat</Name>
+            <ViewSelectedBy><TypeName>MontyHall.Stat</TypeName></ViewSelectedBy>
+            <TableControl>
+				<TableHeaders>
+					<TableColumnHeader><Alignment>right</Alignment><Width>10</Width><Label>GameNumber</Label></TableColumnHeader>
+					<TableColumnHeader><Alignment>left</Alignment><Width>12</Width><Label>Doors</Label></TableColumnHeader>
+					<TableColumnHeader><Alignment>left</Alignment><Width>22</Width><Label>Player1(change_true)</Label></TableColumnHeader>
+					<TableColumnHeader><Alignment>left</Alignment><Width>22</Width><Label>Player2(change_false)</Label></TableColumnHeader>
+					<TableColumnHeader><Alignment>left</Alignment><Width>12</Width><Label>Player1Steps</Label></TableColumnHeader>
+					<TableColumnHeader><Alignment>left</Alignment><Width>12</Width><Label>Player2Steps</Label></TableColumnHeader>
+				</TableHeaders>
+				<TableRowEntries>
+					<TableRowEntry>
+						<TableColumnItems>
+							<TableColumnItem><PropertyName>GameNumber</PropertyName></TableColumnItem>
+							<TableColumnItem><PropertyName>Doors</PropertyName></TableColumnItem>
+							<TableColumnItem><PropertyName>Player1(change_true)</PropertyName></TableColumnItem>
+							<TableColumnItem><PropertyName>Player2(change_false)</PropertyName></TableColumnItem>
+							<TableColumnItem><PropertyName>Player1Steps</PropertyName></TableColumnItem>
+							<TableColumnItem><PropertyName>Player2Steps</PropertyName></TableColumnItem>
+						</TableColumnItems>
+					</TableRowEntry>
+				</TableRowEntries>
+            </TableControl>
+        </View>
+		
+		<!-- ################ LIST DEFINITIONS ################ -->
+		<View>
+			<Name>MontyHall.Stat</Name>
+			<ViewSelectedBy><TypeName>MontyHall.Stat</TypeName></ViewSelectedBy>
+			<ListControl>
+				<ListEntries>
+					<ListEntry>
+					<ListItems>
+						<ListItem><PropertyName>GameNumber</PropertyName></ListItem>
+						<!-- <ListItem><Label>GameNumber</Label><Scriptblock>($_.GameNumber * 1000)</Scriptblock></ListItem> -->
+						<ListItem><Label>Doors</Label><PropertyName>Doors</PropertyName></ListItem>
+						<ListItem><Label>Player1(change_true)</Label><PropertyName>Player1(change_true)</PropertyName></ListItem>
+						<ListItem><Label>Player2(change_false)</Label><PropertyName>Player2(change_false)</PropertyName></ListItem>
+						<ListItem><Label>Player1Steps</Label><PropertyName>Player1Steps</PropertyName></ListItem>
+						<ListItem><Label>Player2Steps</Label><PropertyName>Player2Steps</PropertyName></ListItem>
+					</ListItems>
+					</ListEntry>
+				</ListEntries>
+			</ListControl>
+		</View>
+		
+    </ViewDefinitions>
+</Configuration>
