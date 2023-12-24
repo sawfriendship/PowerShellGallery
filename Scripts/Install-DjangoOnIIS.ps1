@@ -88,10 +88,10 @@ if ($Requirements) {
 # ----------------------------------
 # IIS Config
 Import-Module WebAdministration
-New-Website -Name $SiteName -IPAddress * -Port 80 -HostHeader $SiteName -PhysicalPath $SitePath
+New-Website -Name $SiteName -IPAddress * -Port 80 -HostHeader $SiteName -PhysicalPath $SitePath -Force
 #
 C:\Windows\System32\inetsrv\appcmd.exe unlock config -section:system.webServer/handlers
-New-WebHandler -PSPath "IIS:\Sites\$SiteName" -Name PythonHandler -Path * -Verb * -Modules FastCgiModule -ScriptProcessor "$PythonPath\Scripts\python.exe|$PythonPath\lib\site-packages\wfastcgi.py" -ResourceType Unspecified -RequiredAccess Script
+New-WebHandler -PSPath "IIS:\Sites\$SiteName" -Name PythonHandler -Path * -Verb * -Modules FastCgiModule -ScriptProcessor "$PythonPath\Scripts\python.exe|$PythonPath\lib\site-packages\wfastcgi.py" -ResourceType Unspecified -RequiredAccess Script -Force
 Remove-WebHandler -PSPath "IIS:\Sites\$SiteName\static" -Name PythonHandler
 Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/appSettings" -Name "." -Value @{key = "PYTHONPATH"; value = $SitePath}
 Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/appSettings" -Name "." -Value @{key = "DJANGO_SETTINGS_MODULE"; value = "app.settings"}
