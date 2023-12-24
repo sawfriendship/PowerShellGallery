@@ -33,7 +33,8 @@ param (
 
 $SiteName = $SiteName -replace '\s*'
 
-$v = py -V
+Set-Alias -Name 'pyexe' -Value $PythonEXE
+$v = pyexe -V
 Write-Host $v -ForegroundColor Green
 
 if ($Add2Hosts) {
@@ -70,8 +71,6 @@ $SitePath = "C:\inetpub\$SiteName\"
 $PythonPath = "C:\inetpub\$SiteName\$vEnvName"
 
 cd $SitePath
-
-Set-Alias -Name 'pyexe' -Value $PythonEXE
 
 pyexe -m venv $vEnvName
 
