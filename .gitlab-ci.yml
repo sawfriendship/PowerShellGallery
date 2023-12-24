@@ -15,7 +15,17 @@ deploy_to_repository:
     'diff modules'
     $ShowDiff
     $ToPublish = $diff | ? {$_.Version -gt $_.PublishedVersion}
-    # if ($ToPublish) {$ToPublish | % {Publish-Module -Path $_.ModuleBase -NuGetApiKey $NuGetApiKey -Repository $PSRepositoryName}} else {throw "No recent versions of the modules were found $ShowDiff"}
+    #if ($ToPublish) {$ToPublish | % {Publish-Module -Path $_.ModuleBase -NuGetApiKey $NuGetApiKey -Repository $PSRepositoryName}}
+    if ($ToPublish) {
+      $ToPublish | Select-Object -Property @(
+        ,@{n='Script';e={$_.BaseName}}
+        ,@{n='_Publish';e={$r=@{success=$true;error=''};try{$_ = Publish-Module -Path $_.ModuleBase -NuGetApiKey $NuGetApiKey -Repository $PSRepositoryName}catch{$r['success']=$false;$r['error']=$_.Exception.Message}finally{$r}}}
+      ) | Select-Object -Property @(
+        ,'Script'
+        ,@{n='Published';e={$_._Publish.success}}
+        ,@{n='Error';e={$_._Publish.error}}
+      ) | fl
+    }
 
     $Scripts = Get-ChildItem -Path "$LOCATION\Scripts\*.ps1"
     $Scripts | Select-Object -Property @(
