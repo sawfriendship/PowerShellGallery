@@ -1,49 +1,33 @@
 ﻿
 <#PSScriptInfo
-
-.VERSION 1.0.1
-
+.VERSION 1.1.0
 .GUID c0cde633-3d10-43dc-81b3-3cd6faf5dc80
-
 .AUTHOR saw-friendship
-
 .COMPANYNAME
-
 .COPYRIGHT
-
-.TAGS
-Install Django web-framework on IIS web-server 
+.TAGS Install Django web-framework on IIS web-server 
 .LICENSEURI
-
 .PROJECTURI
-
 .ICONURI
-
 .EXTERNALMODULEDEPENDENCIES 
-
 .REQUIREDSCRIPTS
-
 .EXTERNALSCRIPTDEPENDENCIES
-
 .RELEASENOTES
-
-
 .PRIVATEDATA
-
 #>
 
 <# 
-
 .DESCRIPTION 
 Install Django web-framework on IIS web-server 
-
 #> 
 
 #Requires -RunAsAdministrator
 
 param (
-	[Parameter(Mandatory)][System.String]$SiteName,
-	[switch]$Add2Hosts,
+	[Parameter(Mandatory)][string]$SiteName,
+	[string]$PythonEXE = 'python',
+	[string]$Requirements = '',
+	[switch]$AddToHostsFile,
 	[switch]$Http2Https
 )
 
@@ -87,13 +71,19 @@ $PythonPath = "C:\inetpub\$SiteName\$vEnvName"
 
 cd $SitePath
 
-py -m venv $vEnvName
+Set-Alias -Name 'pyexe' -Value $PythonEXE
+
+pyexe -m venv $vEnvName
 
 # ----------------------------------
 .\venv\Scripts\Activate.ps1
 # ----------------------------------
-py -m pip install --upgrade pip wheel
-py -m pip install --upgrade wfastcgi django djangorestframework django-filter django-guardian django-debug-toolbar
+python -m pip install --upgrade pip wheel
+if ($Requirements) {
+	python -m pip install -r $Requirements
+} else {
+	python -m pip install wfastcgi django djangorestframework django-filter django-guardian django-debug-toolbar
+}
 # ---------------------------------------
 .\venv\Scripts\wfastcgi-enable.exe
 # ----------------------------------
@@ -143,10 +133,10 @@ $Settings += 'STATIC_ROOT = os.path.join(BASE_DIR, "static")'
 $Settings += ''
 Set-Content -Path ".\app\settings.py" -Encoding UTF8 -Value $Settings
 
-py manage.py startapp main
-py manage.py collectstatic
-py manage.py migrate
-py manage.py createsuperuser
+python manage.py startapp main
+python manage.py collectstatic
+python manage.py migrate
+python manage.py createsuperuser
 
 # ----------------------------------
 
