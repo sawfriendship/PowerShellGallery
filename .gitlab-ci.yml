@@ -17,7 +17,7 @@ deploy_to_repository:
     $ToPublish = $diff | ? {$_.Version -gt $_.PublishedVersion}
     # if ($ToPublish) {$ToPublish | % {Publish-Module -Path $_.ModuleBase -NuGetApiKey $NuGetApiKey -Repository $PSRepositoryName}} else {throw "No recent versions of the modules were found $ShowDiff"}
 
-    $Scripts = Get-ChildItem -Path '$LOCATION\Scripts\*.ps1'
+    $Scripts = Get-ChildItem -Path "$LOCATION\Scripts\*.ps1"
     $Scripts | Select-Object -Property @{n='Script';e={$_.BaseName}},@{n='Script';e={$r=$true;try{$_ = Publish-Script -Path $_.FullName -NuGetApiKey $NuGetApiKey -Repository $PSRepositoryName}catch{$r=$false}finally{$r}}}
   tags: 
     - APP
