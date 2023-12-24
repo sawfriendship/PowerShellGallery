@@ -25,6 +25,6 @@ deploy_to_repository:
       ,'Script'
       ,@{n='Published';e={$_._Publish.success}}
       ,@{n='Error';e={$_._Publish.error}}
-    )
+    ) | fl
   tags: 
     - APP
