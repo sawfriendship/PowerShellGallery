@@ -1,5 +1,5 @@
 ﻿<#PSScriptInfo
-.VERSION 1.1.3
+.VERSION 1.1.4
 .GUID c0cde633-3d10-43dc-81b3-3cd6faf5dc80
 .AUTHOR saw-friendship
 .COMPANYNAME
@@ -36,7 +36,7 @@ Set-Alias -Name 'pyexe' -Value $PythonEXE
 $v = pyexe -V
 Write-Host $v -ForegroundColor Green
 
-if ($Add2Hosts) {
+if ($AddToHostsFile) {
 	Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "127.0.0.1 `t $SiteName"
 }
 
