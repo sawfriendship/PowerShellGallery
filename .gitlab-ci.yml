@@ -1,14 +1,33 @@
 stages:
-  - deploy
+  - test-module
+  - deploy-module
+  - test-script
+  - deploy-script
 
-deploy_to_repository:
-  stage: deploy
-  only:
-    - main
+test-module:
+  stage: test-module
+  tags: [APP]
+  rules:
+    - changes:
+        - Modules/*
+  script: |
+    $ScriptAnalyze = Invoke-ScriptAnalyzer -Path "$pwd\Modules" -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -Recurse
+    $Warnings = $ScriptAnalyze | ? {$_.Severity -gt 0}
+    if ($Warnings) {
+      $Warnings
+      throw $($Warnings | fl | out-string)
+    }
+
+deploy-module:
+  stage: deploy-module
+  tags: [APP]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - Modules/*
   script: |
     Get-PSRepository | ft Name,SourceLocation
-    $LOCATION = Get-Location
-    $ImportedModules = "$LOCATION\Modules" | Get-ChildItem -Directory | % {Get-ChildItem -Path $_.FullName -Filter '*.psd1'} | % {Import-Module $_.FullName -Prefix 'zzz' -DisableNameChecking -PassThru -Force}
+    $ImportedModules = "$pwd\Modules" | Get-ChildItem -Directory | % {Get-ChildItem -Path $_.FullName -Filter '*.psd1'} | % {Import-Module $_.FullName -Prefix 'zzz' -DisableNameChecking -PassThru -Force}
     $PublishedModules = $ImportedModules | % {Find-Module -Repository $PSRepositoryName -Name $_.Name -ErrorAction SilentlyContinue} | % -Begin {$h=@{}} -Process {$h[$_.Name] = $_.Version} -End {$h}
     $diff = $ImportedModules | Select-Object -Property Name,Version,@{n='PublishedVersion';e={if($PublishedModules.ContainsKey($_.Name)){$PublishedModules[$_.Name]}else{[System.Version]::new()}}},ModuleBase
     $ShowDiff = $diff | Select-Object Name,Version,PublishedVersion | Format-Table -AutoSize | Out-String
@@ -27,7 +46,29 @@ deploy_to_repository:
       ) | fl
     }
 
-    $Scripts = Get-ChildItem -Path "$LOCATION\Scripts\*.ps1"
+test-script:
+  stage: test-script
+  tags: [APP]
+  rules:
+    - changes:
+        - Scripts/*
+  script: |
+    $Warnings = Invoke-ScriptAnalyzer -Path "$pwd\Scripts" -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -Recurse
+    $Warnings = $ScriptAnalyze | ? {$_.Severity -gt 0}
+    if ($Warnings) {
+      $Warnings
+      throw $($Warnings | fl | out-string)
+    }
+
+deploy-script:
+  stage: deploy-script
+  tags: [APP]
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      changes:
+        - Scripts/*
+  script: |
+    $Scripts = Get-ChildItem -Path "$pwd\Scripts\*.ps1"
     $Scripts | Select-Object -Property @(
       ,@{n='Script';e={$_.BaseName}}
       ,@{n='_Publish';e={$r=@{success=$true;error=''};try{$_ = Publish-Script -Path $_.FullName -NuGetApiKey $NuGetApiKey -Repository $PSRepositoryName}catch{$r['success']=$false;$r['error']=$_.Exception.Message}finally{$r}}}
@@ -36,5 +77,3 @@ deploy_to_repository:
       ,@{n='Published';e={$_._Publish.success}}
       ,@{n='Error';e={$_._Publish.error}}
     ) | fl
-  tags: 
-    - APP

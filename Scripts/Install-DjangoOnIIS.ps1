@@ -1,24 +1,24 @@
 ﻿<#PSScriptInfo
-.VERSION 1.1.4
+.VERSION 1.1.5
 .GUID c0cde633-3d10-43dc-81b3-3cd6faf5dc80
 .AUTHOR saw-friendship
 .COMPANYNAME
 .COPYRIGHT
-.TAGS Install Django web-framework on IIS web-server 
+.TAGS Install Django web-framework on IIS web-server
 .LICENSEURI
 .PROJECTURI
 .ICONURI
-.EXTERNALMODULEDEPENDENCIES 
+.EXTERNALMODULEDEPENDENCIES
 .REQUIREDSCRIPTS
 .EXTERNALSCRIPTDEPENDENCIES
 .RELEASENOTES
 .PRIVATEDATA
 #>
 
-<# 
-.DESCRIPTION 
-Install Django web-framework on IIS web-server 
-#> 
+<#
+.DESCRIPTION
+Install Django web-framework on IIS web-server
+#>
 
 #Requires -RunAsAdministrator
 
