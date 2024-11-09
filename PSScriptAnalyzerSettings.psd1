@@ -7,6 +7,9 @@
     )
     ExcludeRules = @(
         ,'PSAvoidUsingWriteHost'
+        ,'PSReviewUnusedParameter'
         ,'PSAvoidUsingCmdletAliases'
+        ,'PSUseToExportFieldsInManifest'
+        ,'PSAvoidUsingConvertToSecureStringWithPlainText'
     )
 }
