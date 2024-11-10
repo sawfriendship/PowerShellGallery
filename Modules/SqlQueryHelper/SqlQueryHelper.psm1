@@ -2,7 +2,7 @@
 $q = "'"
 $qq = "''"
 
-# [System.Management.Automation.PSObject].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Add('StringList', 'System.Collections.Generic.List[System.String]')
+[System.Management.Automation.PSObject].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Add('StringList', 'System.Collections.Generic.List[System.String]')
 # [System.Management.Automation.PSObject].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Add('ObjectList', 'System.Collections.Generic.List[System.Object]')
 
 Function Invoke-SqlCommand {
