@@ -12,10 +12,9 @@ test-module:
         - Modules/*
   script: |
     $ScriptAnalyze = Invoke-ScriptAnalyzer -Path "$pwd\Modules" -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -Recurse
-    $Warnings = $ScriptAnalyze | ? {$_.Severity -gt 0}
-    if ($Warnings) {
-      $Warnings
-      throw $($Warnings | fl | out-string)
+    if ($ScriptAnalyze) {
+      $ScriptAnalyze
+      throw $($ScriptAnalyze | fl | out-string)
     }
 
 deploy-module:
