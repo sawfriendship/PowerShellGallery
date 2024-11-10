@@ -9,7 +9,7 @@ test-module:
   tags: [APP]
   rules:
     - changes:
-        - Modules/*
+        - Modules/**
   script: |
     $ScriptAnalyze = Invoke-ScriptAnalyzer -Path "$pwd\Modules" -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -Recurse
     if ($ScriptAnalyze) {
@@ -23,7 +23,7 @@ deploy-module:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
-        - Modules/*
+        - Modules/**
   script: |
     Get-PSRepository | ft Name,SourceLocation
     $ImportedModules = "$pwd\Modules" | Get-ChildItem -Directory | % {Get-ChildItem -Path $_.FullName -Filter '*.psd1'} | % {Import-Module $_.FullName -Prefix 'zzz' -DisableNameChecking -PassThru -Force}
@@ -50,7 +50,7 @@ test-script:
   tags: [APP]
   rules:
     - changes:
-        - Scripts/*
+        - Scripts/**
   script: |
     $Warnings = Invoke-ScriptAnalyzer -Path "$pwd\Scripts" -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -Recurse
     $Warnings = $ScriptAnalyze | ? {$_.Severity -gt 0}
@@ -65,7 +65,7 @@ deploy-script:
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
       changes:
-        - Scripts/*
+        - Scripts/**
   script: |
     $Scripts = Get-ChildItem -Path "$pwd\Scripts\*.ps1"
     $Scripts | Select-Object -Property @(
