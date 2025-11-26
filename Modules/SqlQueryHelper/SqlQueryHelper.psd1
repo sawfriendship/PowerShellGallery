@@ -12,7 +12,7 @@
 RootModule = 'SqlQueryHelper.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.4'
+ModuleVersion = '1.0.2'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -24,7 +24,7 @@ GUID = '8b846600-abe7-41e5-98ee-4438b70463f0'
 Author = 'Saw-Friendship'
 
 # Company or vendor of this module
-CompanyName = ''
+CompanyName = 'Unknown'
 
 # Copyright statement for this module
 Copyright = 'Saw-Friendship'
