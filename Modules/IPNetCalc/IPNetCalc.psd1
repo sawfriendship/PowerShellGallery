@@ -1,5 +1,5 @@
 #
-# Манифест модуля для модуля "PSGet_IPCalc".
+# Манифест модуля для модуля "IPNetCalc".
 #
 # Создано: saw-friendship
 #
@@ -9,7 +9,7 @@
 @{
 
 # Файл модуля сценария или двоичного модуля, связанный с этим манифестом.
-RootModule = 'IPCalc.psm1'
+RootModule = 'IPNetCalc.psm1'
 
 # Номер версии данного модуля.
 ModuleVersion = '0.0.1'
@@ -66,7 +66,7 @@ Description = 'calculation of an ip network based on the powershell class'
 # FormatsToProcess = @()
 
 # Модули для импорта в качестве вложенных модулей модуля, указанного в параметре RootModule/ModuleToProcess
-NestedModules = @('IPCalc.ps1')
+NestedModules = @('IPNetCalc.ps1')
 
 # В целях обеспечения оптимальной производительности функции для экспорта из этого модуля не используют подстановочные знаки и не удаляют запись. Используйте пустой массив, если нет функций для экспорта.
 FunctionsToExport = 'Get-IPv4Network'
