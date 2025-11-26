@@ -30,7 +30,7 @@ CompanyName = 'Unknown'
 Copyright = '(c) saw-friendship. All rights reserved.'
 
 # Описание функций данного модуля
-# Description = ''
+Description = 'calculation of an ip network based on the powershell class'
 
 # Минимальный номер версии обработчика Windows PowerShell, необходимой для работы данного модуля
 # PowerShellVersion = ''
