@@ -129,12 +129,52 @@ class IPv4Network {
 }
 
 Function Get-IPv4Network {
+    <#
+	.DESCRIPTION
+	calculation of an ip network
+
+	.EXAMPLE
+	Get-IPv4Network -CIDR 198.18.0.0/28
+
+	IPAddress    : 198.18.0.0
+	CIDR         : 198.18.0.0/28
+	Mask         : 255.255.255.240
+	PrefixLength : 28
+	Subnet       : 198.18.0.0
+	WildCard     : 0.0.0.15
+	Broadcast    : 198.18.0.15
+	Count        : 16
+
+	.EXAMPLE
+	Get-IPv4Network -CIDR 198.18.0.0/15 | % Contains 198.19.1.1
+	True
+
+	.EXAMPLE
+	Get-IPv4Network -CIDR 198.18.0.0/30 | % GetIPArray | ft IPAddressToString
+
+	IPAddressToString
+	-----------------
+	198.18.0.0
+	198.18.0.1
+	198.18.0.2
+	198.18.0.3
+
+	.EXAMPLE
+	Get-NetRoute -AddressFamily IPv4 | Select-Object -Property *,@{n='net';e={Get-IPv4Network -CIDR $_.DestinationPrefix}} | ? {$_.net.Contains('8.8.8.8')} | Sort-Object -Property @{e={$_.net.PrefixLength};asc=$false},ifMetric | ft InterfaceMetric,DestinationPrefix,NextHop
+
+	InterfaceMetric DestinationPrefix NextHop
+	--------------- ----------------- -------
+				 35 0.0.0.0/0         192.168.0.1
+				 25 0.0.0.0/0         192.168.0.1
+	#>
+    [CmdletBinding()]
     param(
         [parameter(Mandatory, ParameterSetName = 'CIDR', ValueFromPipelineByPropertyName)][Alias('DestinationPrefix')][string]$CIDR,
-        [parameter(Mandatory, ParameterSetName = 'Mask')][parameter(Mandatory, ParameterSetName = ('PrefixLength'), ValueFromPipelineByPropertyName)][IPAddress]$IPAddress,
+        [parameter(Mandatory, ParameterSetName = 'Mask')][parameter(Mandatory, ParameterSetName = ('PrefixLength'))][IPAddress]$IPAddress,
         [Parameter(Mandatory, ParameterSetName = 'Mask')][IPAddress]$Mask,
-        [Parameter(Mandatory, ParameterSetName = 'PrefixLength', ValueFromPipelineByPropertyName)][int]$PrefixLength
+        [Parameter(Mandatory, ParameterSetName = 'PrefixLength')][int]$PrefixLength
     )
-
-    New-Object -TypeName IPv4Network -ArgumentList ([object[]]$PSBoundParameters.Values)
+    process {
+        New-Object -TypeName IPv4Network -ArgumentList ([object[]]$PSBoundParameters.Values)
+    }
 }
