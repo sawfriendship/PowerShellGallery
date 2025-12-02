@@ -1,5 +1,5 @@
 ﻿<#PSScriptInfo
-.VERSION 1.1.5
+.VERSION 1.1.6
 .GUID c0cde633-3d10-43dc-81b3-3cd6faf5dc80
 .AUTHOR saw-friendship
 .COMPANYNAME
