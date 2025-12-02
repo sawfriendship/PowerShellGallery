@@ -1,7 +1,9 @@
 [string[]]$PassThruSqlcmdParam = @('Server', 'Database', 'Credential', 'CommandTimeout', 'OnlyShowQuery')
 $q = "'"
 $qq = "''"
-$DBNull = [System.DBNull]::Value
+
+[System.Management.Automation.PSObject].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Add('StringList', 'System.Collections.Generic.List[System.String]')
+# [System.Management.Automation.PSObject].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Add('ObjectList', 'System.Collections.Generic.List[System.Object]')
 
 Function Invoke-SqlCommand {
     <#
@@ -12,7 +14,7 @@ Name          ServiceName
 ----          -----------
 autotimesvc   autotimesvc
 TimeBrokerSvc TimeBrokerSvc
-vmictimesync  Vmictimesync
+vmictimesync  vmictimesync
 W32Time       W32Time
 #>
     [CmdletBinding()]
@@ -93,30 +95,31 @@ W32Time       W32Time
     }
 }
 
-Function Create-SqlTable {
+Function Add-SqlTable {
     <#
 .EXAMPLE
-Get-Service | Create-SqlTable -Server sql -Database test1 -Table ps -OnlyShowQuery
+Get-Service | Create-SqlTable -Server sql -Database [test1] -Table [ps] -OnlyShowQuery
 CREATE TABLE ps (
-		[Name] nvarchar(62) NOT NULL,
-		[RequiredServices] nvarchar(MAX) NOT NULL,
-		[CanPauseAndContinue] nvarchar(8) NOT NULL,
-		[CanShutdown] nvarchar(8) NOT NULL,
-		[CanStop] nvarchar(6) NOT NULL,
-		[DisplayName] nvarchar(178) NOT NULL,
-		[DependentServices] nvarchar(MAX) NULL,
-		[MachineName] nvarchar(2) NOT NULL,
-		[ServiceName] nvarchar(62) NOT NULL,
-		[ServicesDependedOn] nvarchar(MAX) NOT NULL,
-		[ServiceHandle] nvarchar(MAX) NULL,
-		[Status] nvarchar(10) NOT NULL,
-		[ServiceType] nvarchar(51) NOT NULL,
-		[StartType] nvarchar(9) NOT NULL,
-		[Site] nvarchar(MAX) NULL,
-		[Container] nvarchar(MAX) NULL
+        [Name] nvarchar(62) NOT NULL,
+        [RequiredServices] nvarchar(MAX) NOT NULL,
+        [CanPauseAndContinue] nvarchar(8) NOT NULL,
+        [CanShutdown] nvarchar(8) NOT NULL,
+        [CanStop] nvarchar(6) NOT NULL,
+        [DisplayName] nvarchar(178) NOT NULL,
+        [DependentServices] nvarchar(MAX) NULL,
+        [MachineName] nvarchar(2) NOT NULL,
+        [ServiceName] nvarchar(62) NOT NULL,
+        [ServicesDependedOn] nvarchar(MAX) NOT NULL,
+        [ServiceHandle] nvarchar(MAX) NULL,
+        [Status] nvarchar(10) NOT NULL,
+        [ServiceType] nvarchar(51) NOT NULL,
+        [StartType] nvarchar(9) NOT NULL,
+        [Site] nvarchar(MAX) NULL,
+        [Container] nvarchar(MAX) NULL
 ) ON [PRIMARY]
 #>
     [CmdletBinding()]
+    [Alias('Create-SqlTable', 'New-SqlTable')]
     param(
         [Parameter(Mandatory = $true)][Alias('ServerInstance', 'SqlServer')][String]$Server
         , [Parameter(Mandatory = $true)][Alias('SqlDatabase')][String]$Database
@@ -153,7 +156,7 @@ CREATE TABLE ps (
         }
     }
     End {
-        $TableTypes = $InputObjects | Select-Object -Property $Properties | ConvertTo-HashTable | Import-Data_ -CreateTable @ImportDataParam
+        $TableTypes = $InputObjects | Select-Object -Property $Properties | ConvertTo_HashTable | Import_Data -CreateTable @ImportDataParam
         $Types = $TableTypes.Types
         $Query = $Properties | % -Begin {
             [string[]]$Lines = @()
@@ -173,7 +176,7 @@ CREATE TABLE ps (
     }
 }
 
-Function Insert-SqlRecord {
+Function Add-SqlRecord {
     <#
 .EXAMPLE
 Get-Service | select -f 3 | Insert-SqlRecord -Server sql -Database test1 -Table ps -PassThru | select Name,ServiceName
@@ -207,6 +210,7 @@ INSERT W32Time
 
 #>
     [CmdletBinding()]
+    [Alias('New-SqlRecord', 'Insert-SqlRecord')]
     param (
         [Parameter(Mandatory = $true)][Alias('ServerInstance', 'SqlServer')][String]$Server
         , [Parameter(Mandatory = $true)][Alias('SqlDatabase')][String]$Database
@@ -247,14 +251,14 @@ INSERT W32Time
                     $Data = $_
                 }
                 else {
-                    $Data = New-Object -TypeName PSCustomObject -Property $_ | ConvertTo-HashTable @ConvertToHashTableParam
+                    $Data = New-Object -TypeName PSCustomObject -Property $_ | ConvertTo_HashTable @ConvertToHashTableParam
                 }
             }
             else {
-                $Data = $_ | ConvertTo-HashTable @ConvertToHashTableParam
+                $Data = $_ | ConvertTo_HashTable @ConvertToHashTableParam
             }
 
-            $iData = Import-Data_ -HashTable $Data @ImportDataParam
+            $iData = Import_Data -HashTable $Data @ImportDataParam
             $DataKeys = $iData.Keys
             $DataValues = $iData.Values
 
@@ -272,7 +276,7 @@ INSERT W32Time
     End {}
 }
 
-Function Update-SqlRecord {
+Function Edit-SqlRecord {
     <#
 .EXAMPLE
 Get-Service | ? {!$_.DependentServices} | select -f 3 -p Name,ServiceName,DependentServices | % {Update-SqlRecord -Server sql -Database test1 -Table ps -Data $_ -Filter @{ServiceName = $_.ServiceName} -PassThru -SkipNullOrWhiteSpace}
@@ -291,6 +295,7 @@ Get-Service | ? {!$_.DependentServices} | select -f 3 -p Name,ServiceName,Depend
  UPDATE ps SET [Name] = 'ALG',[ServiceName] = 'ALG' OUTPUT 'UPDATE' AS [ACTION], INSERTED.* WHERE [ServiceName] = ALG IF @@ROWCOUNT = 0 INSERT INTO ps ([Name],[ServiceName]) OUTPUT 'INSERT' AS [ACTION], INSERTED.* VALUES ('ALG','ALG')
 #>
     [CmdletBinding(DefaultParameterSetName = 'Filter')]
+    [Alias('Update-SqlRecord', 'Set-SqlRecord')]
     param (
         [Parameter(Mandatory = $true)][Alias('ServerInstance', 'SqlServer')][String]$Server
         , [Parameter(Mandatory = $true)][Alias('SqlDatabase')][String]$Database
@@ -339,14 +344,14 @@ Get-Service | ? {!$_.DependentServices} | select -f 3 -p Name,ServiceName,Depend
                     $Data = $_
                 }
                 else {
-                    $Data = New-Object -TypeName PSCustomObject -Property $_ | ConvertTo-HashTable @ConvertToHashTableParam
+                    $Data = New-Object -TypeName PSCustomObject -Property $_ | ConvertTo_HashTable @ConvertToHashTableParam
                 }
             }
             else {
-                $Data = $_ | ConvertTo-HashTable @ConvertToHashTableParam
+                $Data = $_ | ConvertTo_HashTable @ConvertToHashTableParam
             }
 
-            $iData = Import-Data_ -HashTable $Data
+            $iData = Import_Data -HashTable $Data
             $DataKeys = $iData.Keys
             $DataValues = $iData.Values
 
@@ -361,7 +366,7 @@ Get-Service | ? {!$_.DependentServices} | select -f 3 -p Name,ServiceName,Depend
             $set = $sets -join ','
 
             if ($Filter) {
-                $iFilter = Import-Data_ -HashTable $Filter
+                $iFilter = Import_Data -HashTable $Filter
                 $FilterKeys = $iFilter.Keys
                 $FilterValues = $iFilter.Values
 
@@ -428,8 +433,8 @@ W32Time                   False               False       False                 
         , [alias('RowCount')][int]$Limit
         , [Parameter(Mandatory = $false)][switch]$PassThru
         , [System.Management.Automation.PSCredential]$Credential
-        , [switch]$OnlyShowQuery
         , [int]$CommandTimeout
+        , [switch]$OnlyShowQuery
     )
 
     $PSBoundParameters.Keys | ? { $PassThruSqlcmdParam.Contains($_) } | % -Begin { $SqlQueryParam = @{} } -Process { $SqlQueryParam[$_] = $PSBoundParameters[$_] }
@@ -444,7 +449,7 @@ W32Time                   False               False       False                 
     $OUTPUT = @{$true = 'OUTPUT DELETED.*'; $false = '' }[$PSBoundParameters.ContainsKey('PassThru')]
 
     if ($Filter) {
-        $iFilter = Import-Data_ -HashTable $Filter
+        $iFilter = Import_Data -HashTable $Filter
         $FilterKeys = $iFilter.Keys
         $FilterValues = $iFilter.Values
 
@@ -482,10 +487,10 @@ Get-SqlRecord -Server sql -SqlDatabase test1 -SqlTable ps -Filter @{Name = 'win*
 
 RowNumber Name                ServiceType                        Status
 --------- ----                -----------                        ------
-		1 WinDefend           Win32OwnProcess                    Running
-		2 Winmgmt             Win32OwnProcess                    Running
-		1 WinRM               Win32OwnProcess, Win32ShareProcess Running
-		2 WinHttpAutoProxySvc Win32OwnProcess, Win32ShareProcess Running
+        1 WinDefend           Win32OwnProcess                    Running
+        2 Winmgmt             Win32OwnProcess                    Running
+        1 WinRM               Win32OwnProcess, Win32ShareProcess Running
+        2 WinHttpAutoProxySvc Win32OwnProcess, Win32ShareProcess Running
 .EXAMPLE
 Get-SqlRecord -Server sql -SqlDatabase test1 -SqlTable ps -Filter @{Name = 'win*'} -Property Status,'COUNT(*) AS Counter' -GroupBy Status
 
@@ -571,7 +576,7 @@ Get-SqlRecord -Server sql -SqlDatabase test1 -SqlTable ps -Property Status,'COUN
     }
 
     if ($Filter) {
-        $iFilter = Import-Data_ -HashTable $Filter
+        $iFilter = Import_Data -HashTable $Filter
         $FilterKeys = $iFilter.Keys
         $FilterValues = $iFilter.Values
 
@@ -596,7 +601,7 @@ Get-SqlRecord -Server sql -SqlDatabase test1 -SqlTable ps -Property Status,'COUN
 
 }
 
-Filter ConvertTo-HashTable {
+Filter ConvertTo_HashTable {
     param(
         [System.Array]$Property = @()
         , [System.Array]$ExcludeProperty = @()
@@ -628,7 +633,7 @@ Filter ConvertTo-HashTable {
     End {}
 }
 
-Function Import-Data_ {
+Function Import_Data {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
@@ -699,7 +704,7 @@ Function Import-Data_ {
                     $Type = $null
                 }
 
-                if (!$Type -or $Value -eq $null -or $Value.GetType() -eq [System.DBNull]) {
+                if (!$Type -or $null -eq $Value -or $Value.GetType() -eq [System.DBNull]) {
                     $_Value = 'NULL'
                 }
                 elseif ($Value.GetType() -in @([int], [int64])) {
@@ -747,7 +752,7 @@ Function Import-Data_ {
                         }
                     }
 
-                    if (!$Type -or $Value -eq $null -or $Value.GetType() -eq [System.DBNull]) {
+                    if (!$Type -or $null -eq $Value -or $Value.GetType() -eq [System.DBNull]) {
                         $Types[$Key]['AllowNull'] = $true
                     }
                     else {
@@ -818,3 +823,14 @@ Function Import-Data_ {
         }
     }
 }
+
+Export-ModuleMember -Alias @(
+    , 'New-SqlRecord'
+    , 'Insert-SqlRecord'
+    , 'Update-SqlRecord'
+    , 'Set-SqlRecord'
+    , 'Create-SqlTable'
+    , 'New-SqlTable'
+)
+
+
