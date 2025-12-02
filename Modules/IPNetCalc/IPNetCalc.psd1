@@ -12,7 +12,7 @@
 RootModule = 'IPNetCalc.psm1'
 
 # Номер версии данного модуля.
-ModuleVersion = '1.0.1'
+ModuleVersion = '1.0.2'
 
 # Поддерживаемые выпуски PSEditions
 # CompatiblePSEditions = @()
