@@ -1,6 +1,6 @@
 @{
     RootModule        = 'IPNetCalc.psm1'
-    ModuleVersion     = '1.0.3'
+    ModuleVersion     = '1.0.4'
     GUID              = '3f1cbe7f-aede-4855-a0d0-f80cf13aca97'
     Author            = 'saw-friendship'
     CompanyName       = 'Unknown'
@@ -11,7 +11,7 @@
     FunctionsToExport = @( 'Get-IPv4Network' )
     CmdletsToExport   = '*'
     VariablesToExport = '*'
-    AliasesToExport   = '*'
+    AliasesToExport   = @( 'ipcalc' )
     PrivateData       = @{ PSData = @{} }
 }
 

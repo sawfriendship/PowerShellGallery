@@ -168,6 +168,7 @@ Function Get-IPv4Network {
 				 25 0.0.0.0/0         192.168.0.1
 	#>
     [CmdletBinding()]
+    [Alias("ipcalc")]
     param(
         [parameter(Mandatory, ParameterSetName = 'CIDR', ValueFromPipelineByPropertyName)][Alias('DestinationPrefix')][string]$CIDR,
         [parameter(Mandatory, ParameterSetName = 'Mask')][parameter(Mandatory, ParameterSetName = ('PrefixLength'))][IPAddress]$IPAddress,
