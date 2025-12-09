@@ -170,10 +170,10 @@ Function Get-IPv4Network {
     [CmdletBinding()]
     [Alias("ipcalc")]
     param(
-        [parameter(Mandatory, ParameterSetName = 'CIDR', ValueFromPipelineByPropertyName)][Alias('DestinationPrefix')][string]$CIDR,
-        [parameter(Mandatory, ParameterSetName = 'Mask')][parameter(Mandatory, ParameterSetName = ('PrefixLength'))][IPAddress]$IPAddress,
-        [Parameter(Mandatory, ParameterSetName = 'Mask')][IPAddress]$Mask,
-        [Parameter(Mandatory, ParameterSetName = 'PrefixLength')][int]$PrefixLength
+        [Parameter(Mandatory, ParameterSetName = 'CIDR', Position = 0, ValueFromPipelineByPropertyName)][Alias('DestinationPrefix')][string]$CIDR,
+        [Parameter(Mandatory, ParameterSetName = 'Mask', Position = 1)][Parameter(Mandatory, ParameterSetName = 'PrefixLength', Position = 1)][IPAddress]$IPAddress,
+        [Parameter(Mandatory, ParameterSetName = 'Mask', Position = 2)][IPAddress]$Mask,
+        [Parameter(Mandatory, ParameterSetName = 'PrefixLength', Position = 2)][int]$PrefixLength
     )
     process {
         New-Object -TypeName IPv4Network -ArgumentList ([object[]]$PSBoundParameters.Values)
