@@ -5,7 +5,7 @@ class IPv4Network {
     [ipaddress]$Subnet
     [ipaddress]$Broadcast
     [ipaddress]$WildCard
-    [ValidateRange(0, 32)][int]$PrefixLength
+    [ValidateRange(0, 32)][int16]$PrefixLength
     [int64]$Count
     [int64]$ReversedAddress
     [bool]$NetworkContainsIPAddress
