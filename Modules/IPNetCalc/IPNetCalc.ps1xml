@@ -9,15 +9,17 @@
             </ViewSelectedBy>
             <TableControl>
                 <TableHeaders>
-                    <TableColumnHeader><Label>CIDR</Label><Width>24</Width></TableColumnHeader>
-                    <TableColumnHeader><Label>Subnet</Label><Width>20</Width></TableColumnHeader>
-                    <TableColumnHeader><Label>Mask</Label><Width>20</Width></TableColumnHeader>
-                    <TableColumnHeader><Label>Count</Label><Width>16</Width></TableColumnHeader>
+                    <TableColumnHeader><Label>IPAddress</Label><Width>16</Width></TableColumnHeader>
+                    <TableColumnHeader><Label>CIDR</Label><Width>20</Width></TableColumnHeader>
+                    <TableColumnHeader><Label>Subnet</Label><Width>16</Width></TableColumnHeader>
+                    <TableColumnHeader><Label>Mask</Label><Width>16</Width></TableColumnHeader>
+                    <TableColumnHeader><Label>Count</Label><Width>12</Width></TableColumnHeader>
                 </TableHeaders>
                 <TableRowEntries>
                     <TableRowEntry>
                         <TableColumnItems>
-							<TableColumnItem><PropertyName>CIDR</PropertyName></TableColumnItem>
+							<TableColumnItem><PropertyName>IPAddress</PropertyName></TableColumnItem>
+                            <TableColumnItem><PropertyName>CIDR</PropertyName></TableColumnItem>
                             <TableColumnItem><PropertyName>Subnet</PropertyName></TableColumnItem>
                             <TableColumnItem><PropertyName>Mask</PropertyName></TableColumnItem>
                             <TableColumnItem><PropertyName>Count</PropertyName></TableColumnItem>

@@ -2,11 +2,13 @@ class IPv4Network {
     [ipaddress]$IPAddress
     [string]$CIDR
     [ipaddress]$Mask
-    [ValidateRange(0, 32)][int]$PrefixLength
     [ipaddress]$Subnet
-    [ipaddress]$WildCard
     [ipaddress]$Broadcast
+    [ipaddress]$WildCard
+    [ValidateRange(0, 32)][int]$PrefixLength
     [int64]$Count
+    [int64]$ReversedAddress
+    [bool]$NetworkContainsIPAddress
 
     IPv4Network([string]$CIDR) {
         $this.IPAddress, $this.PrefixLength = $CIDR.Split([char[]]'\/')
@@ -14,12 +16,14 @@ class IPv4Network {
             throw "is not ipv4 $($this.IPAddress)"
         }
 
-        $this.Mask = [IPAddress][string](4gb - [bigint]::Pow(2, 32 - $this.PrefixLength))
-        $this.WildCard = [byte[]]$this.Mask.GetAddressBytes().ForEach({ 255 - $_ })
-        $this.Subnet = $this.IPAddress.Address -band $this.Mask.Address
-        $this.Broadcast = $this.IPAddress.Address -bor $this.WildCard.Address
+        $this.Mask = [IPv4Network]::get_mask_from_prefixlength($this.PrefixLength)
+        $this.WildCard = [IPv4Network]::get_wildcard($this.Mask)
+        $this.Subnet = [IPv4Network]::get_subnet($this.IPAddress,$this.Mask)
+        $this.Broadcast = [IPv4Network]::get_broadcast($this.IPAddress,$this.WildCard)
         $this.CIDR = "$($this.Subnet)/$($this.PrefixLength)"
         $this.Count = $this.GetCount()
+        $this.ReversedAddress = [IPv4Network]::get_reversed_address($this.IPAddress)
+        $this.NetworkContainsIPAddress = $this.Includes($this.IPAddress)
     }
 
     IPv4Network([ipaddress]$IPAddress, [int16]$PrefixLength) {
@@ -28,12 +32,14 @@ class IPv4Network {
         }
 
         $this.PrefixLength = $PrefixLength
-        $this.Mask = [IPAddress][string](4gb - [bigint]::Pow(2, 32 - $this.PrefixLength))
-        $this.WildCard = [byte[]]$this.Mask.GetAddressBytes().ForEach({ 255 - $_ })
-        $this.Subnet = $this.IPAddress.Address -band $this.Mask.Address
-        $this.Broadcast = $this.IPAddress.Address -bor $this.WildCard.Address
+        $this.Mask = [IPv4Network]::get_mask_from_prefixlength($this.PrefixLength)
+        $this.WildCard = [IPv4Network]::get_wildcard($this.Mask)
+        $this.Subnet = [IPv4Network]::get_subnet($this.IPAddress,$this.Mask)
+        $this.Broadcast = [IPv4Network]::get_broadcast($this.IPAddress,$this.WildCard)
         $this.CIDR = "$($this.Subnet)/$PrefixLength"
         $this.Count = $this.GetCount()
+        $this.ReversedAddress = [IPv4Network]::get_reversed_address($this.IPAddress)
+        $this.NetworkContainsIPAddress = $this.Includes($this.IPAddress)
     }
 
     IPv4Network([ipaddress]$IPAddress, [ipaddress]$Mask) {
@@ -45,18 +51,31 @@ class IPv4Network {
             $this.Mask = $Mask
         }
 
-        $this.WildCard = [byte[]]$this.Mask.GetAddressBytes().ForEach({ 255 - $_ })
-        $this.Subnet = $IPAddress.Address -band $Mask.Address
-        $this.Broadcast = $this.IPAddress.Address -bor $this.WildCard.Address
+        $this.WildCard = [IPv4Network]::get_wildcard($this.Mask)
+        $this.Subnet = [IPv4Network]::get_subnet($this.IPAddress,$this.Mask)
+        $this.Broadcast = [IPv4Network]::get_broadcast($this.IPAddress,$this.WildCard)
         $this.CIDR = "$($this.Subnet)/$($this.PrefixLength)"
         $this.Count = $this.GetCount()
+        $this.ReversedAddress = [IPv4Network]::get_reversed_address($this.IPAddress)
+        $this.NetworkContainsIPAddress = $this.Includes($this.IPAddress)
     }
 
-    [bool] Contains([ipaddress]$ip) {
+    [bool] Includes([ipaddress]$ip) {
         [int64]$i_ip = [IPv4Network]::get_ip_int64($ip)
         [int64]$i_Subnet = [IPv4Network]::get_ip_int64($this.Subnet)
         [int64]$i_Broadcast = [IPv4Network]::get_ip_int64($this.Broadcast)
         return ($i_Subnet -le $i_ip) -and ($i_ip -le $i_Broadcast)
+    }
+
+    [IPv4Network] WhereIncludes([ipaddress]$ip) {
+        [int64]$i_ip = [IPv4Network]::get_ip_int64($ip)
+        [int64]$i_Subnet = [IPv4Network]::get_ip_int64($this.Subnet)
+        [int64]$i_Broadcast = [IPv4Network]::get_ip_int64($this.Broadcast)
+        if (($i_Subnet -le $i_ip) -and ($i_ip -le $i_Broadcast)) {
+            return $this
+        } else {
+            return $null
+        }
     }
 
     [ipaddress[]] GetIParray() {
@@ -69,21 +88,33 @@ class IPv4Network {
         return $ipaddresses
     }
 
+    [void] SetIPAddress([ipaddress]$ip) {
+        if (![IPv4Network]::ip_is_v4($ip)) {
+            throw "is not ipv4 $($ip)"
+        }
+        $this.IPAddress = $ip
+        $this.ReversedAddress = [IPv4Network]::get_reversed_address($ip)
+        $this.NetworkContainsIPAddress = $this.Includes($this.IPAddress)
+    }
+
     [IPv4Network] Add([int64]$i) {
         [ipaddress]$r_ip = [IPv4Network]::get_ip_int64($this.IPAddress) + $i
         $this.IPAddress = [IPv4Network]::get_reversed_ip($r_ip)
+        $this.ReversedAddress = [IPv4Network]::get_reversed_address($this.IPAddress)
+        $this.NetworkContainsIPAddress = $this.Includes($this.IPAddress)
         return $this
     }
 
     [IPv4Network] Subtract([int64]$i) {
         [ipaddress]$r_ip = [IPv4Network]::get_ip_int64($this.IPAddress) - $i
         $this.IPAddress = [IPv4Network]::get_reversed_ip($r_ip)
+        $this.ReversedAddress = [IPv4Network]::get_reversed_address($this.IPAddress)
+        $this.NetworkContainsIPAddress = $this.Includes($this.IPAddress)
         return $this
     }
 
     [int64] GetCount() {
-        $o1, $o2, $o3, $o4 = $this.WildCard.GetAddressBytes()
-        return $o1 * 16mb + $o2 * 64kb + $o3 * 256 + $o4 + 1
+        return [IPv4Network]::get_reversed_address($this.WildCard) + 1
     }
 
     [string] ToString() {
@@ -94,16 +125,20 @@ class IPv4Network {
         return ($this.CIDR -eq $other.CIDR)
     }
 
-    static [IPv4Network] op_Addition([IPv4Network]$ip, [int64]$i) {
-        return $ip.Add($i)
+    hidden static [IPv4Network] op_Addition([IPv4Network]$ip, [int64]$i) {
+        return [IPv4Network]::new($ip.IPAddress,$ip.Mask).Add($i)
     }
 
-    static [IPv4Network] op_Subtraction([IPv4Network]$ip, [int64]$i) {
-        return $ip.Subtract($i)
+    hidden static [IPv4Network] op_Subtraction([IPv4Network]$ip, [int64]$i) {
+        return [IPv4Network]::new($ip.IPAddress,$ip.Mask).Subtract($i)
     }
 
     static [ipaddress] get_reversed_ip([ipaddress]$ip) {
         return [string]$ip.Address
+    }
+
+    static [int64] get_reversed_address([ipaddress]$ip) {
+        return ([ipaddress][IPv4Network]::get_reversed_ip($ip)).Address
     }
 
     static [int64] get_ip_int64([ipaddress]$ip) {
@@ -112,6 +147,22 @@ class IPv4Network {
 
     static [int64] get_net_int64([IPv4Network]$net) {
         return [IPv4Network]::get_ip_int64($net.Subnet) -band [IPv4Network]::get_ip_int64($net.Broadcast)
+    }
+
+    static [ipaddress] get_wildcard([ipaddress]$ip) {
+        return (4gb + (-bnot $ip.Address))
+    }
+
+    static [ipaddress] get_subnet([ipaddress]$ip,[ipaddress]$mask) {
+        return $ip.Address -band $mask.Address
+    }
+
+    static [ipaddress] get_broadcast([ipaddress]$ip,[ipaddress]$wildcard) {
+        return $ip.Address -bor $wildcard.Address
+    }
+
+    static [ipaddress] get_mask_from_prefixlength([int16]$PrefixLength) {
+        return [string](4gb - [bigint]::Pow(2, 32 - $PrefixLength))
     }
 
     static [string] get_bin_string([ipaddress]$ip) {
@@ -126,56 +177,4 @@ class IPv4Network {
         return $ip.AddressFamily -eq [System.Net.Sockets.AddressFamily]::InterNetwork
     }
 
-}
-
-Function Get-IPv4Network {
-    <#
-	.DESCRIPTION
-	calculation of an ip network
-
-	.EXAMPLE
-	Get-IPv4Network -CIDR 198.18.0.0/28
-
-	IPAddress    : 198.18.0.0
-	CIDR         : 198.18.0.0/28
-	Mask         : 255.255.255.240
-	PrefixLength : 28
-	Subnet       : 198.18.0.0
-	WildCard     : 0.0.0.15
-	Broadcast    : 198.18.0.15
-	Count        : 16
-
-	.EXAMPLE
-	Get-IPv4Network -CIDR 198.18.0.0/15 | % Contains 198.19.1.1
-	True
-
-	.EXAMPLE
-	Get-IPv4Network -CIDR 198.18.0.0/30 | % GetIPArray | ft IPAddressToString
-
-	IPAddressToString
-	-----------------
-	198.18.0.0
-	198.18.0.1
-	198.18.0.2
-	198.18.0.3
-
-	.EXAMPLE
-	Get-NetRoute -AddressFamily IPv4 | Select-Object -Property *,@{n='net';e={Get-IPv4Network -CIDR $_.DestinationPrefix}} | ? {$_.net.Contains('8.8.8.8')} | Sort-Object -Property @{e={$_.net.PrefixLength};asc=$false},ifMetric | ft InterfaceMetric,DestinationPrefix,NextHop
-
-	InterfaceMetric DestinationPrefix NextHop
-	--------------- ----------------- -------
-				 35 0.0.0.0/0         192.168.0.1
-				 25 0.0.0.0/0         192.168.0.1
-	#>
-    [CmdletBinding()]
-    [Alias("ipcalc")]
-    param(
-        [Parameter(Mandatory, ParameterSetName = 'CIDR', Position = 0, ValueFromPipelineByPropertyName)][Alias('DestinationPrefix')][string]$CIDR,
-        [Parameter(Mandatory, ParameterSetName = 'Mask', Position = 1)][Parameter(Mandatory, ParameterSetName = 'PrefixLength', Position = 1)][IPAddress]$IPAddress,
-        [Parameter(Mandatory, ParameterSetName = 'Mask', Position = 2)][IPAddress]$Mask,
-        [Parameter(Mandatory, ParameterSetName = 'PrefixLength', Position = 2)][int]$PrefixLength
-    )
-    process {
-        New-Object -TypeName IPv4Network -ArgumentList ([object[]]$PSBoundParameters.Values)
-    }
 }
