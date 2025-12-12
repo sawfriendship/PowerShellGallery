@@ -18,7 +18,7 @@ class IPv4Network {
         $this.Mask = [IPv4Network]::get_mask_from_prefixlength($this.PrefixLength)
         $this.WildCard = [IPv4Network]::get_wildcard($this.Mask)
         $this.Subnet = [IPv4Network]::get_subnet($this.IPAddress,$this.Mask)
-        $this.Broadcast = [IPv4Network]::get_broadcast($this.IPAddress,$this.WildCard)
+        $this.Broadcast = [IPv4Network]::get_broadcast($this.IPAddress,$this.Mask)
         $this.CIDR = "$($this.Subnet)/$($this.PrefixLength)"
         $this.Count = $this.GetCount()
         $this.ReversedAddress = [IPv4Network]::get_reversed_address($this.IPAddress)
@@ -34,7 +34,7 @@ class IPv4Network {
         $this.Mask = [IPv4Network]::get_mask_from_prefixlength($this.PrefixLength)
         $this.WildCard = [IPv4Network]::get_wildcard($this.Mask)
         $this.Subnet = [IPv4Network]::get_subnet($this.IPAddress,$this.Mask)
-        $this.Broadcast = [IPv4Network]::get_broadcast($this.IPAddress,$this.WildCard)
+        $this.Broadcast = [IPv4Network]::get_broadcast($this.IPAddress,$this.Mask)
         $this.CIDR = "$($this.Subnet)/$PrefixLength"
         $this.Count = $this.GetCount()
         $this.ReversedAddress = [IPv4Network]::get_reversed_address($this.IPAddress)
@@ -53,7 +53,7 @@ class IPv4Network {
         $this.Mask = $Mask
         $this.WildCard = [IPv4Network]::get_wildcard($this.Mask)
         $this.Subnet = [IPv4Network]::get_subnet($this.IPAddress,$this.Mask)
-        $this.Broadcast = [IPv4Network]::get_broadcast($this.IPAddress,$this.WildCard)
+        $this.Broadcast = [IPv4Network]::get_broadcast($this.IPAddress,$this.Mask)
         $this.CIDR = "$($this.Subnet)/$($this.PrefixLength)"
         $this.Count = $this.GetCount()
         $this.ReversedAddress = [IPv4Network]::get_reversed_address($this.IPAddress)
@@ -146,8 +146,8 @@ class IPv4Network {
         return $IPAddress.Address -band $Mask.Address
     }
 
-    static [ipaddress] get_broadcast([ipaddress]$IPAddress,[ipaddress]$WildCard) {
-        return $IPAddress.Address -bor $WildCard.Address
+    static [ipaddress] get_broadcast([ipaddress]$IPAddress,[ipaddress]$Mask) {
+        return $IPAddress.Address -bor [IPv4Network]::get_wildcard($Mask).Address
     }
 
     static [ipaddress] get_mask_from_prefixlength([int16]$PrefixLength) {
