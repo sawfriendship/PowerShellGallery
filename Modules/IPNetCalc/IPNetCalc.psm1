@@ -77,13 +77,6 @@ function Get-IPv4Network {
     True
     False
 
-    .EXAMPLE
-    ([ipv4Network[]]('10.0.1.0/24','10.0.2.0/24','10.0.3.0/24')).WhereIncludes('10.0.2.100')
-
-    IPAddress        CIDR                 Subnet           Mask             Count
-    ---------        ----                 ------           ----             -----
-    10.0.2.0         10.0.2.0/24          10.0.2.0         255.255.255.0    256
-
 	#>
 
     [CmdletBinding()]

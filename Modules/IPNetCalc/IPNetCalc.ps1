@@ -67,17 +67,6 @@ class IPv4Network {
         return ($i_Subnet -le $i_ip) -and ($i_ip -le $i_Broadcast)
     }
 
-    [IPv4Network] WhereIncludes([ipaddress]$ip) {
-        [int64]$i_ip = [IPv4Network]::get_ip_int64($ip)
-        [int64]$i_Subnet = [IPv4Network]::get_ip_int64($this.Subnet)
-        [int64]$i_Broadcast = [IPv4Network]::get_ip_int64($this.Broadcast)
-        if (($i_Subnet -le $i_ip) -and ($i_ip -le $i_Broadcast)) {
-            return $this
-        } else {
-            return $null
-        }
-    }
-
     [ipaddress[]] GetIParray() {
         [System.Collections.Generic.List[string]]$ipaddresses = @()
         [int64]$a = [IPv4Network]::get_ip_int64($this.Subnet)
