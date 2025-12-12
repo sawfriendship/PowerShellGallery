@@ -147,7 +147,7 @@ class IPv4Network {
     }
 
     static [ipaddress] get_broadcast([ipaddress]$IPAddress,[ipaddress]$Mask) {
-        return $IPAddress.Address -bor [IPv4Network]::get_wildcard($Mask).Address
+        return [IPv4Network]::get_subnet($IPAddress,$Mask).Address -bor [IPv4Network]::get_wildcard($Mask).Address
     }
 
     static [ipaddress] get_mask_from_prefixlength([int16]$PrefixLength) {
