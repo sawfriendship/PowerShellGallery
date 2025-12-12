@@ -1,6 +1,6 @@
 @{
     RootModule        = 'IPNetCalc.psm1'
-    ModuleVersion     = '1.1.1'
+    ModuleVersion     = '1.1.10'
     GUID              = '3f1cbe7f-aede-4855-a0d0-f80cf13aca97'
     Author            = 'saw-friendship'
     CompanyName       = 'Unknown'
