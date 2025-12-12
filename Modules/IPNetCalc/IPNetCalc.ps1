@@ -5,7 +5,7 @@ class IPv4Network {
     [ipaddress]$Subnet
     [ipaddress]$Broadcast
     [ipaddress]$WildCard
-    [ValidateRange(0, 32)][int16]$PrefixLength
+    [ValidateRange(0,32)][int16]$PrefixLength
     [int64]$Count
     [int64]$ReversedAddress
     [bool]$NetworkContainsIPAddress
@@ -15,7 +15,6 @@ class IPv4Network {
         if (![IPv4Network]::ip_is_v4($this.IPAddress)) {
             throw "is not ipv4 $($this.IPAddress)"
         }
-
         $this.Mask = [IPv4Network]::get_mask_from_prefixlength($this.PrefixLength)
         $this.WildCard = [IPv4Network]::get_wildcard($this.Mask)
         $this.Subnet = [IPv4Network]::get_subnet($this.IPAddress,$this.Mask)
@@ -27,10 +26,10 @@ class IPv4Network {
     }
 
     IPv4Network([ipaddress]$IPAddress, [int16]$PrefixLength) {
-        if (![IPv4Network]::ip_is_v4($IPAddress)) { throw "is not ipv4 $IPAddress" } else {
-            $this.IPAddress = $IPAddress
+        if (![IPv4Network]::ip_is_v4($IPAddress)) {
+            throw "is not ipv4 $IPAddress"
         }
-
+        $this.IPAddress = $IPAddress
         $this.PrefixLength = $PrefixLength
         $this.Mask = [IPv4Network]::get_mask_from_prefixlength($this.PrefixLength)
         $this.WildCard = [IPv4Network]::get_wildcard($this.Mask)
@@ -43,14 +42,15 @@ class IPv4Network {
     }
 
     IPv4Network([ipaddress]$IPAddress, [ipaddress]$Mask) {
-        if (![IPv4Network]::ip_is_v4($IPAddress)) { throw "is not ipv4 $IPAddress" } else {
-            $this.IPAddress = $IPAddress
+        if (![IPv4Network]::ip_is_v4($IPAddress)) {
+            throw "is not ipv4 $IPAddress"
         }
-        if (![IPv4Network]::check_mask($Mask)) { throw "invalid mask $Mask" } else {
-            $this.PrefixLength = [IPv4Network]::get_bin_string($Mask).TrimEnd('0').Length
-            $this.Mask = $Mask
+        if (![IPv4Network]::check_mask($Mask)) {
+            throw "invalid mask $Mask"
         }
-
+        $this.IPAddress = $IPAddress
+        $this.PrefixLength = [IPv4Network]::get_bin_string($Mask).TrimEnd('0').Length
+        $this.Mask = $Mask
         $this.WildCard = [IPv4Network]::get_wildcard($this.Mask)
         $this.Subnet = [IPv4Network]::get_subnet($this.IPAddress,$this.Mask)
         $this.Broadcast = [IPv4Network]::get_broadcast($this.IPAddress,$this.WildCard)
