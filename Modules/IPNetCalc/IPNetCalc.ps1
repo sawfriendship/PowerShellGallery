@@ -7,6 +7,7 @@ class IPv4Network {
     [ipaddress]$WildCard
     [ValidateRange(0,32)][int16]$PrefixLength
     [int64]$Count
+    [int64]$Address
     [int64]$ReversedAddress
     [bool]$NetworkContainsIPAddress
 
@@ -21,7 +22,8 @@ class IPv4Network {
         $this.Broadcast = [IPv4Network]::get_broadcast($this.IPAddress,$this.Mask)
         $this.CIDR = "$($this.Subnet)/$($this.PrefixLength)"
         $this.Count = $this.GetCount()
-        $this.ReversedAddress = [IPv4Network]::get_reversed_address($this.IPAddress)
+        $this.Address = [IPv4Network]::get_address($this.IPAddress)
+        $this.ReversedAddress = [IPv4Network]::get_address_reversed($this.IPAddress)
         $this.NetworkContainsIPAddress = $this.Includes($this.IPAddress)
     }
 
@@ -37,7 +39,8 @@ class IPv4Network {
         $this.Broadcast = [IPv4Network]::get_broadcast($this.IPAddress,$this.Mask)
         $this.CIDR = "$($this.Subnet)/$PrefixLength"
         $this.Count = $this.GetCount()
-        $this.ReversedAddress = [IPv4Network]::get_reversed_address($this.IPAddress)
+        $this.Address = [IPv4Network]::get_address($this.IPAddress)
+        $this.ReversedAddress = [IPv4Network]::get_address_reversed($this.IPAddress)
         $this.NetworkContainsIPAddress = $this.Includes($this.IPAddress)
     }
 
@@ -56,21 +59,22 @@ class IPv4Network {
         $this.Broadcast = [IPv4Network]::get_broadcast($this.IPAddress,$this.Mask)
         $this.CIDR = "$($this.Subnet)/$($this.PrefixLength)"
         $this.Count = $this.GetCount()
-        $this.ReversedAddress = [IPv4Network]::get_reversed_address($this.IPAddress)
+        $this.Address = [IPv4Network]::get_address($this.IPAddress)
+        $this.ReversedAddress = [IPv4Network]::get_address_reversed($this.IPAddress)
         $this.NetworkContainsIPAddress = $this.Includes($this.IPAddress)
     }
 
     [bool] Includes([ipaddress]$IPAddress) {
-        [int64]$i_ip = [IPv4Network]::get_ip_int64($IPAddress)
-        [int64]$i_Subnet = [IPv4Network]::get_ip_int64($this.Subnet)
-        [int64]$i_Broadcast = [IPv4Network]::get_ip_int64($this.Broadcast)
-        return ($i_Subnet -le $i_ip) -and ($i_ip -le $i_Broadcast)
+        [int64]$i = [IPv4Network]::get_address_reversed($IPAddress)
+        [int64]$a = [IPv4Network]::get_address_reversed($this.Subnet)
+        [int64]$z = [IPv4Network]::get_address_reversed($this.Broadcast)
+        return ($i -ge $a) -and ($i -le $z)
     }
 
     [ipaddress[]] GetIParray() {
         [System.Collections.Generic.List[string]]$ipaddresses = @()
-        [int64]$a = [IPv4Network]::get_ip_int64($this.Subnet)
-        [int64]$z = [IPv4Network]::get_ip_int64($this.Broadcast)
+        [int64]$a = [IPv4Network]::get_address_reversed($this.Subnet)
+        [int64]$z = [IPv4Network]::get_address_reversed($this.Broadcast)
         for ([int64]$i = $a; $i -le $z; $i++) {
             $ipaddresses.Add($i)
         }
@@ -82,28 +86,38 @@ class IPv4Network {
             throw "is not ipv4 $($IPAddress)"
         }
         $this.IPAddress = $IPAddress
-        $this.ReversedAddress = [IPv4Network]::get_reversed_address($IPAddress)
+        $this.Address = [IPv4Network]::get_address($this.IPAddress)
+        $this.ReversedAddress = [IPv4Network]::get_address_reversed($IPAddress)
         $this.NetworkContainsIPAddress = $this.Includes($this.IPAddress)
     }
 
-    [IPv4Network] Add([int64]$i) {
-        [ipaddress]$r_ip = [IPv4Network]::get_ip_int64($this.IPAddress) + $i
-        $this.IPAddress = [IPv4Network]::get_reversed_ip($r_ip)
-        $this.ReversedAddress = [IPv4Network]::get_reversed_address($this.IPAddress)
-        $this.NetworkContainsIPAddress = $this.Includes($this.IPAddress)
-        return $this
+    [PSCustomObject] GetBinaryNotation() {
+        return [PSCustomObject][ordered]@{
+            IPAddress = [IPv4Network]::get_bin_string($this.IPAddress)
+            Mask = [IPv4Network]::get_bin_string($this.Mask)
+            Subnet = [IPv4Network]::get_bin_string($this.Subnet)
+            Broadcast = [IPv4Network]::get_bin_string($this.Broadcast)
+        }
     }
 
-    [IPv4Network] Subtract([int64]$i) {
-        [ipaddress]$r_ip = [IPv4Network]::get_ip_int64($this.IPAddress) - $i
-        $this.IPAddress = [IPv4Network]::get_reversed_ip($r_ip)
-        $this.ReversedAddress = [IPv4Network]::get_reversed_address($this.IPAddress)
+    [void] Add([int64]$i) {
+        [ipaddress]$r_ip = [IPv4Network]::get_ip_reversed($this.IPAddress) + $i
+        $this.IPAddress = [IPv4Network]::get_ip_reversed($r_ip)
+        $this.Address = [IPv4Network]::get_address($this.IPAddress)
+        $this.ReversedAddress = [IPv4Network]::get_address_reversed($this.IPAddress)
         $this.NetworkContainsIPAddress = $this.Includes($this.IPAddress)
-        return $this
+    }
+
+    [void] Subtract([int64]$i) {
+        [ipaddress]$r_ip = [IPv4Network]::get_ip_reversed($this.IPAddress) - $i
+        $this.IPAddress = [IPv4Network]::get_ip_reversed($r_ip)
+        $this.Address = [IPv4Network]::get_address($this.IPAddress)
+        $this.ReversedAddress = [IPv4Network]::get_address_reversed($this.IPAddress)
+        $this.NetworkContainsIPAddress = $this.Includes($this.IPAddress)
     }
 
     [int64] GetCount() {
-        return [IPv4Network]::get_reversed_address($this.WildCard) + 1
+        return 1 + (-bnot [bigint]::new(([IPv4Network]::get_bytes_reversed($this.Mask))))
     }
 
     [string] ToString() {
@@ -114,28 +128,40 @@ class IPv4Network {
         return ($this.CIDR -eq $other.CIDR)
     }
 
-    hidden static [IPv4Network] op_Addition([IPv4Network]$IPAddress, [int64]$i) {
-        return [IPv4Network]::new($IPAddress.IPAddress,$IPAddress.Mask).Add($i)
+    hidden static [object] op_Addition([IPv4Network]$IPv4Network, [int64]$i) {
+        [int64]$r_ip = $IPv4Network.IPAddress.Address + $i
+        # $IPv4Network.IPAddress = [IPv4Network]::get_ip_reversed($r_ip)
+        # $IPv4Network.Address = [IPv4Network]::get_address($IPv4Network.IPAddress)
+        # $IPv4Network.ReversedAddress = [IPv4Network]::get_address_reversed($IPv4Network.IPAddress)
+        # $IPv4Network.NetworkContainsIPAddress = $IPv4Network.Includes($IPv4Network.IPAddress)
+        return $r_ip
     }
 
-    hidden static [IPv4Network] op_Subtraction([IPv4Network]$IPAddress, [int64]$i) {
-        return [IPv4Network]::new($IPAddress.IPAddress,$IPAddress.Mask).Subtract($i)
+    hidden static [IPv4Network] op_Subtraction([IPv4Network]$IPv4Network, [int64]$i) {
+        [ipaddress]$r_ip = [IPv4Network]::get_ip_reversed($IPv4Network.IPAddress) - $i
+        $IPv4Network.IPAddress = [IPv4Network]::get_ip_reversed($r_ip)
+        $IPv4Network.Address = [IPv4Network]::get_address($IPv4Network.IPAddress)
+        $IPv4Network.ReversedAddress = [IPv4Network]::get_address_reversed($IPv4Network.IPAddress)
+        $IPv4Network.NetworkContainsIPAddress = $IPv4Network.Includes($IPv4Network.IPAddress)
+        return $IPv4Network
     }
 
-    static [ipaddress] get_reversed_ip([ipaddress]$IPAddress) {
-        return [string]$IPAddress.Address
+    static [byte[]] get_bytes_reversed([ipaddress]$IPAddress) {
+        $bytes = $IPAddress.GetAddressBytes()
+        [array]::Reverse($bytes)
+        return $bytes
     }
 
-    static [int64] get_reversed_address([ipaddress]$IPAddress) {
-        return ([ipaddress][IPv4Network]::get_reversed_ip($IPAddress)).Address
+    static [int64] get_address([ipaddress]$IPAddress) {
+        return [bigint]::new($IPAddress.GetAddressBytes())
     }
 
-    static [int64] get_ip_int64([ipaddress]$IPAddress) {
-        return [IPv4Network]::get_reversed_ip($IPAddress).Address
+    static [int64] get_address_reversed([ipaddress]$IPAddress) {
+        return [bigint]::new([IPv4Network]::get_bytes_reversed($IPAddress)) + 4gb
     }
 
-    static [int64] get_net_int64([IPv4Network]$IPv4Network) {
-        return [IPv4Network]::get_ip_int64($IPv4Network.Subnet) -band [IPv4Network]::get_ip_int64($IPv4Network.Broadcast)
+    static [ipaddress] get_ip_reversed([ipaddress]$IPAddress) {
+        return [ipaddress]::new([IPv4Network]::get_bytes_reversed($IPAddress))
     }
 
     static [ipaddress] get_wildcard([ipaddress]$IPAddress) {
@@ -143,7 +169,7 @@ class IPv4Network {
     }
 
     static [ipaddress] get_subnet([ipaddress]$IPAddress,[ipaddress]$Mask) {
-        return $IPAddress.Address -band $Mask.Address
+        return [IPv4Network]::get_address($IPAddress) -band [IPv4Network]::get_address($Mask)
     }
 
     static [ipaddress] get_broadcast([ipaddress]$IPAddress,[ipaddress]$Mask) {
@@ -155,7 +181,7 @@ class IPv4Network {
     }
 
     static [string] get_bin_string([ipaddress]$IPAddress) {
-        return [System.Convert]::ToString([IPv4Network]::get_ip_int64($IPAddress), 2)
+        return [System.Convert]::ToString([IPv4Network]::get_address_reversed($IPAddress), 2)
     }
 
     static [bool] check_mask([ipaddress]$IPAddress) {
