@@ -1,8 +1,8 @@
 ﻿stages:
-  - lint-modules
-  - deploy-module
-  - lint-scripts
-  - deploy-script
+  - job-lint-modules
+  - job-deploy-module
+  - job-lint-scripts
+  - job-deploy-script
 
 variables:
   RUNNER: APP
@@ -10,8 +10,8 @@ variables:
 .tags:
   tags: [$RUNNER]
 
-lint-modules:
-  stage: lint-modules
+job-lint-modules:
+  stage: job-lint-modules
   rules:
     - changes: [Modules/**]
   extends: [.tag]
@@ -38,9 +38,9 @@ lint-modules:
       Write-Verbose -Verbose -Message "✅ Total Error Count: $($ScriptAnalyzerResults.Count)"
     }
 
-deploy-module:
-  stage: deploy-module
-  needs: [lint-modules]
+job-deploy-module:
+  stage: job-deploy-module
+  needs: [job-lint-modules]
   rules:
     - changes: [Modules/**]
       if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -66,8 +66,8 @@ deploy-module:
       ) | fl
     }
 
-lint-scripts:
-  stage: lint-scripts
+job-lint-scripts:
+  stage: job-lint-scripts
   rules:
     - changes: [Scripts/**]
   extends: [.tag]
@@ -91,9 +91,9 @@ lint-scripts:
         Write-Verbose -Verbose -Message "✅ Total Error Count: $($ScriptAnalyzerResults.Count)"
     }
 
-deploy-script:
-  stage: deploy-script
-  needs: [lint-scripts]
+job-deploy-script:
+  stage: job-deploy-script
+  needs: [job-lint-scripts]
   rules:
     - changes: [Scripts/**]
       if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
