@@ -1,8 +1,8 @@
 ﻿stages:
-  - job-lint-modules
-  - job-deploy-module
-  - job-lint-scripts
-  - job-deploy-script
+  - lint-modules
+  - deploy-module
+  - lint-scripts
+  - deploy-script
 
 variables:
   RUNNER: APP
@@ -11,7 +11,7 @@ variables:
   tags: [$RUNNER]
 
 job-lint-modules:
-  stage: job-lint-modules
+  stage: lint-modules
   rules:
     - changes: [Modules/**]
   extends: [.tag]
@@ -39,8 +39,8 @@ job-lint-modules:
     }
 
 job-deploy-module:
-  stage: job-deploy-module
-  # needs: [job-lint-modules]
+  stage: deploy-module
+  needs: [job-lint-modules]
   rules:
     - changes: [Modules/**]
       if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -67,7 +67,7 @@ job-deploy-module:
     }
 
 job-lint-scripts:
-  stage: job-lint-scripts
+  stage: lint-scripts
   rules:
     - changes: [Scripts/**]
   extends: [.tag]
@@ -92,8 +92,8 @@ job-lint-scripts:
     }
 
 job-deploy-script:
-  stage: job-deploy-script
-  # needs: [job-lint-scripts]
+  stage: deploy-script
+  needs: [job-lint-scripts]
   rules:
     - changes: [Scripts/**]
       if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
