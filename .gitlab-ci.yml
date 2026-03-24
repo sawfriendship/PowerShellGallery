@@ -34,8 +34,7 @@ lint-modules:
 
 deploy-module:
   stage: deploy-module
-  dependencies:
-    - lint-modules
+  needs: [lint-modules]
   tags: [APP]
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -90,8 +89,7 @@ lint-scripts:
 
 deploy-script:
   stage: deploy-script
-  dependencies:
-    - lint-scripts
+  needs: [lint-scripts]
   tags: [APP]
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
