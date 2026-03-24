@@ -40,7 +40,7 @@ job-lint-modules:
 
 job-deploy-module:
   stage: job-deploy-module
-  needs: [job-lint-modules]
+  # needs: [job-lint-modules]
   rules:
     - changes: [Modules/**]
       if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -93,7 +93,7 @@ job-lint-scripts:
 
 job-deploy-script:
   stage: job-deploy-script
-  needs: [job-lint-scripts]
+  # needs: [job-lint-scripts]
   rules:
     - changes: [Scripts/**]
       if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
