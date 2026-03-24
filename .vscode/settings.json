@@ -1,17 +1,50 @@
-// {
-//     "powershell.scriptAnalysis.settingsPath": ".vscode/PSScriptAnalyzerSettings.psd1",
-//     "powershell.scriptAnalysis.enable": true,
-// }
-// https://learn.microsoft.com/en-us/powershell/scripting/dev-cross-plat/vscode/understanding-file-encoding?view=powershell-5.1
 {
+    // files
     "files.autoGuessEncoding": true,
     "files.insertFinalNewline": true,
     "files.trimTrailingWhitespace": true,
-    "powershell.scriptAnalysis.enable": true,
+    // powershell
+    "powershell.cwd": "${workspaceFolder}",
+    "powershell.analyzeOpenDocumentsOnly": true,
     "powershell.scriptAnalysis.settingsPath": ".vscode/PSScriptAnalyzerSettings.psd1",
+    "powershell.scriptAnalysis.enable": true,
+    "powershell.promptToUpdatePowerShell": false,
+    "powershell.integratedConsole.focusConsoleOnExecute": false,
+    "powershell.integratedConsole.suppressStartupBanner": true,
+    "powershell.integratedConsole.showOnStartup": false,
+    "powershell.developer.editorServicesLogLevel": "Information",
+    "powershell.debugging.createTemporaryIntegratedConsole": true,
+    // editor
+    "editor.cursorBlinking": "smooth",
+    "editor.cursorWidth": 3,
+    "editor.cursorSmoothCaretAnimation": "on",
+    "editor.semanticHighlighting.enabled": true,
     "[powershell]": {
-        "editor.tabSize": 4,
-        "editor.insertSpaces": true,
-        "editor.detectIndentation": false,
-    }
+        "editor.defaultFormatter": "ms-vscode.powershell",
+        "editor.autoIndent": "full",
+        "editor.autoIndentOnPaste": true,
+        "editor.autoIndentOnPasteWithinString": true,
+        "editor.wordSeparators": "`~!@#$%^&*()=+[{]}\\|;:'\",.<>/?",
+    },
+    // codeFormatting
+    // https://github.com/PoshCode/PowerShellPracticeAndStyle/issues/81
+    "powershell.codeFormatting.preset": "Custom",
+    "powershell.codeFormatting.pipelineIndentationStyle": "IncreaseIndentationForFirstPipeline",
+    "powershell.codeFormatting.ignoreOneLineBlock": true,
+    "powershell.codeFormatting.useCorrectCasing": true,
+    "powershell.codeFormatting.trimWhitespaceAroundPipe": true,
+    "powershell.codeFormatting.useConstantStrings": true,
+    "powershell.codeFormatting.whitespaceAfterSeparator": true,
+    "powershell.codeFormatting.whitespaceBetweenParameters": true,
+    "powershell.codeFormatting.autoCorrectAliases": false,
+    "powershell.codeFormatting.avoidSemicolonsAsLineTerminators": true,
+    "powershell.codeFormatting.alignPropertyValuePairs": false,
+    "powershell.codeFormatting.addWhitespaceAroundPipe": true,
+    "powershell.codeFormatting.newLineAfterCloseBrace": false,  // WTF?!?! если включено, то добавляется перенос фигурных скобок
+    "powershell.codeFormatting.newLineAfterOpenBrace": true,
+    "powershell.codeFormatting.openBraceOnSameLine": true, // WTF?!?! если включено, то убирается перенос фигурных скобок
+    "powershell.codeFormatting.whitespaceAroundOperator": true,
+    "powershell.codeFormatting.whitespaceBeforeOpenBrace": true,
+    "powershell.codeFormatting.whitespaceBeforeOpenParen": true,
+    "powershell.codeFormatting.whitespaceInsideBrace": true,
 }

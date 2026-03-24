@@ -80,7 +80,7 @@ function Get-IPv4Network {
 	#>
 
     [CmdletBinding()]
-    [Alias("ipcalc")]
+    [Alias('ipcalc')]
     param(
         [Parameter(Mandatory, ParameterSetName = 'CIDR', Position = 0, ValueFromPipelineByPropertyName)][Alias('DestinationPrefix')][string]$CIDR,
         [Parameter(Mandatory, ParameterSetName = 'Mask', Position = 1)][Parameter(Mandatory, ParameterSetName = 'PrefixLength', Position = 1)][IPAddress]$IPAddress,
