@@ -80,8 +80,7 @@ pyexe -m venv $vEnvName
 python -m pip install --upgrade pip wheel
 if ($Requirements) {
     python -m pip install -r $Requirements
-}
-else {
+} else {
     python -m pip install wfastcgi django djangorestframework django-filter django-guardian django-debug-toolbar
 }
 # ---------------------------------------
@@ -94,36 +93,36 @@ New-Website -Name $SiteName -IPAddress * -Port 80 -HostHeader $SiteName -Physica
 C:\Windows\System32\inetsrv\appcmd.exe unlock config -section:system.webServer/handlers
 New-WebHandler -PSPath "IIS:\Sites\$SiteName" -Name PythonHandler -Path * -Verb * -Modules FastCgiModule -ScriptProcessor "$PythonPath\Scripts\python.exe|$PythonPath\lib\site-packages\wfastcgi.py" -ResourceType Unspecified -RequiredAccess Script -Force
 Remove-WebHandler -PSPath "IIS:\Sites\$SiteName\static" -Name PythonHandler
-Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/appSettings" -Name "." -Value @{key = "PYTHONPATH"; value = $SitePath }
-Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/appSettings" -Name "." -Value @{key = "DJANGO_SETTINGS_MODULE"; value = "app.settings" }
-Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/appSettings" -Name "." -Value @{key = "WSGI_HANDLER"; value = "django.core.wsgi.get_wsgi_application()" }
+Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter '/appSettings' -Name '.' -Value @{key = 'PYTHONPATH'; value = $SitePath }
+Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter '/appSettings' -Name '.' -Value @{key = 'DJANGO_SETTINGS_MODULE'; value = 'app.settings' }
+Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter '/appSettings' -Name '.' -Value @{key = 'WSGI_HANDLER'; value = 'django.core.wsgi.get_wsgi_application()' }
 # ----------------------------------
 # Favicon
 $RuleName = 'favicon'
-Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/system.webServer/rewrite/rules" -Name "." -Value @{name = $RuleName; patternSyntax = 'ExactMatch'; stopProcessing = 'false' }
+Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter '/system.webServer/rewrite/rules' -Name '.' -Value @{name = $RuleName; patternSyntax = 'ExactMatch'; stopProcessing = 'false' }
 Set-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/system.webServer/rewrite/rules/rule[@name='$RuleName']" -Name 'match' -Value @{url = 'favicon.ico' }
 Set-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/system.webServer/rewrite/rules/rule[@name='$RuleName']" -Name 'action' -Value @{type = 'Rewrite'; 'url' = '/static/favicon.ico' }
 # ----------------------------------
 # IIS_IUSRS must have rights to the directory
-Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/appSettings" -Name "." -Value @{key = "WSGI_LOG"; value = "$SitePath\wfastcgi.log" }
-Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/appSettings" -Name "." -Value @{key = "WSGI_RESTART_FILE_REGEX"; value = ".*((\.py)|(\.config))$" }
+Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter '/appSettings' -Name '.' -Value @{key = 'WSGI_LOG'; value = "$SitePath\wfastcgi.log" }
+Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter '/appSettings' -Name '.' -Value @{key = 'WSGI_RESTART_FILE_REGEX'; value = '.*((\.py)|(\.config))$' }
 # ----------------------------------
 if ($Http2Https) {
     New-WebBinding -Name $SiteName -IPAddress * -Port 443 -Protocol https -HostHeader $SiteName -SslFlags 1
 
     $RuleName = 'Http2Https'
-    Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/system.webServer/rewrite/rules" -Name "." -Value @{name = $RuleName; stopProcessing = 'false' }
+    Add-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter '/system.webServer/rewrite/rules' -Name '.' -Value @{name = $RuleName; stopProcessing = 'false' }
     Set-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/system.webServer/rewrite/rules/rule[@name='$RuleName']" -Name 'match' -Value @{url = '(.*)' }
     Set-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/system.webServer/rewrite/rules/rule[@name='$RuleName']" -Name 'conditions' -Value @{trackAllCaptures = 'False'; logicalGrouping = 'MatchAll' }
     Set-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/system.webServer/rewrite/rules/rule[@name='$RuleName']/conditions" -Name '.' -Value @{input = '{HTTPS}'; pattern = '^OFF$' }
-    Set-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/system.webServer/rewrite/rules/rule[@name='$RuleName']" -Name 'action' -Value @{type = "Redirect"; url = "https://{HTTP_HOST}/{R:1}"; redirectType = "SeeOther" }
+    Set-WebConfigurationProperty -PSPath "IIS:\Sites\$SiteName" -Filter "/system.webServer/rewrite/rules/rule[@name='$RuleName']" -Name 'action' -Value @{type = 'Redirect'; url = 'https://{HTTP_HOST}/{R:1}'; redirectType = 'SeeOther' }
 }
 ###########################################################################################################
 
 # ---------------------------------------
 django-admin startproject app .
 
-$Settings = Get-Content -Path ".\app\settings.py" -Encoding UTF8 | Select-String -NotMatch -Pattern '^STATIC_URL = |^ALLOWED_HOSTS = '
+$Settings = Get-Content -Path '.\app\settings.py' -Encoding UTF8 | Select-String -NotMatch -Pattern '^STATIC_URL = |^ALLOWED_HOSTS = '
 $Settings += ''
 $Settings += "ALLOWED_HOSTS = ['*']"
 $Settings += ''
@@ -131,7 +130,7 @@ $Settings += 'STATIC_URL = "/static/"'
 $Settings += 'import os'
 $Settings += 'STATIC_ROOT = os.path.join(BASE_DIR, "static")'
 $Settings += ''
-Set-Content -Path ".\app\settings.py" -Encoding UTF8 -Value $Settings
+Set-Content -Path '.\app\settings.py' -Encoding UTF8 -Value $Settings
 
 python manage.py startapp main
 python manage.py collectstatic
