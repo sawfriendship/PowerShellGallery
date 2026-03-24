@@ -7,14 +7,11 @@ stages:
 variables:
   RUNNER: APP
 
-.extends:
-  tags: [$RUNNER]
-
 job-lint-modules:
   stage: lint-modules
   rules:
     - changes: [Modules/**]
-  extends: [.extends]
+  tags: [$RUNNER]
   script: |
     [object[]]$ScriptAnalyzerResult = @()
     [System.Collections.Generic.List[object]]$ScriptAnalyzerResults = [System.Collections.Generic.List[object]]::new()
@@ -44,7 +41,7 @@ job-deploy-module:
   rules:
     - changes: [Modules/**]
       if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  extends: [.extends]
+  tags: [$RUNNER]
   script: |
     Get-PSRepository | ft Name,SourceLocation
     $ImportedModules = "$pwd\Modules" | Get-ChildItem -Directory | % {Get-ChildItem -Path $_.FullName -Filter '*.psd1'} | % {Import-Module $_.FullName -Prefix 'zzz' -DisableNameChecking -PassThru -Force}
@@ -70,7 +67,7 @@ job-lint-scripts:
   stage: lint-scripts
   rules:
     - changes: [Scripts/**]
-  extends: [.extends]
+  tags: [$RUNNER]
   script: |
     Get-ChildItem -Path "$pwd\Scripts" -File -Recurse -Include @('*.ps1', '*.psd1', '*.psm1') | % {
       [object[]]$ScriptAnalyzerResult = @(Invoke-ScriptAnalyzer -Path $_.FullName -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -ErrorAction Ignore)
@@ -97,7 +94,7 @@ job-deploy-script:
   rules:
     - changes: [Scripts/**]
       if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  extends: [.extends]
+  tags: [$RUNNER]
   script: |
     $Scripts = Get-ChildItem -Path "$pwd\Scripts\*.ps1"
     $Scripts | Select-Object -Property @(
