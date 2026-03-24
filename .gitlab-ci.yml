@@ -1,24 +1,41 @@
 stages:
-  - test-module
+  - lint-modules
   - deploy-module
-  - test-script
+  - lint-scripts
   - deploy-script
 
-test-module:
-  stage: test-module
+lint-modules:
+  stage: lint-modules
   tags: [APP]
   rules:
     - changes:
         - Modules/**
   script: |
-    $ScriptAnalyze = Invoke-ScriptAnalyzer -Path "$pwd\Modules" -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -Recurse
-    if ($ScriptAnalyze) {
-      $ScriptAnalyze
-      throw $($ScriptAnalyze | fl | out-string)
+    [object[]]$ScriptAnalyzerResult = @()
+    [System.Collections.Generic.List[object]]$ScriptAnalyzerResults = [System.Collections.Generic.List[object]]::new()
+
+    Get-ChildItem -Path "$pwd\Modules" -File -Recurse -Include @('*.ps1', '*.psd1', '*.psm1') | % {
+      [object[]]$ScriptAnalyzerResult = @(Invoke-ScriptAnalyzer -Path $_.FullName -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -ErrorAction Ignore)
+
+      $Message = "ErrorCount: $($ScriptAnalyzerResult.Count), File: $($_.FullName.Replace($PWD,'.'))"
+
+      if ($ScriptAnalyzerResult) {
+        $ScriptAnalyzerResults.AddRange($ScriptAnalyzerResult)
+        Write-Warning -Message "❌ $Message"
+      } else {
+        Write-Verbose -Message "✅ $Message" -Verbose
+      }
+    }
+
+    if ($ScriptAnalyzerResults) {
+      throw "❌ Total Error Count: $($ScriptAnalyzerResults.Count)"
+    } else {
+        Write-Verbose -Verbose -Message "✅ Total Error Count: $($ScriptAnalyzerResults.Count)"
     }
 
 deploy-module:
   stage: deploy-module
+  needs: [lint-modules]
   tags: [APP]
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
@@ -45,22 +62,35 @@ deploy-module:
       ) | fl
     }
 
-test-script:
-  stage: test-script
+lint-scripts:
+  stage: lint-scripts
   tags: [APP]
   rules:
     - changes:
         - Scripts/**
   script: |
-    $Warnings = Invoke-ScriptAnalyzer -Path "$pwd\Scripts" -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -Recurse
-    $Warnings = $ScriptAnalyze | ? {$_.Severity -gt 0}
-    if ($Warnings) {
-      $Warnings
-      throw $($Warnings | fl | out-string)
+    Get-ChildItem -Path "$pwd\Scripts" -File -Recurse -Include @('*.ps1', '*.psd1', '*.psm1') | % {
+      [object[]]$ScriptAnalyzerResult = @(Invoke-ScriptAnalyzer -Path $_.FullName -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -ErrorAction Ignore)
+
+      $Message = "ErrorCount: $($ScriptAnalyzerResult.Count), File: $($_.FullName.Replace($PWD,'.'))"
+
+      if ($ScriptAnalyzerResult) {
+        $ScriptAnalyzerResults.AddRange($ScriptAnalyzerResult)
+        Write-Warning -Message "❌ $Message"
+      } else {
+        Write-Verbose -Message "✅ $Message" -Verbose
+      }
+    }
+
+    if ($ScriptAnalyzerResults) {
+      throw "❌ Total Error Count: $($ScriptAnalyzerResults.Count)"
+    } else {
+        Write-Verbose -Verbose -Message "✅ Total Error Count: $($ScriptAnalyzerResults.Count)"
     }
 
 deploy-script:
   stage: deploy-script
+  needs: [lint-scripts]
   tags: [APP]
   rules:
     - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
