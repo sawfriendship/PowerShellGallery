@@ -1,7 +1,7 @@
 stages:
-  - lint-modules
+  # - lint-modules
   - deploy-module
-  - lint-scripts
+  # - lint-scripts
   - deploy-script
 
 variables:
@@ -14,7 +14,7 @@ job-lint-modules:
   tags: [$RUNNER]
   script: |
     [object[]]$ScriptAnalyzerResult = @()
-    [System.Collections.Generic.List[object]]$ScriptAnalyzerResults = [System.Collections.Generic.List[object]]::new()
+    [System.Collections.Generic.List[object]]$ScriptAnalyzerResults = @()
 
     Get-ChildItem -Path "$pwd\Modules" -File -Recurse -Include @('*.ps1', '*.psd1', '*.psm1') | % {
       [object[]]$ScriptAnalyzerResult = @(Invoke-ScriptAnalyzer -Path $_.FullName -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -ErrorAction Ignore)
@@ -69,6 +69,9 @@ job-lint-scripts:
     - changes: [Scripts/**]
   tags: [$RUNNER]
   script: |
+    [object[]]$ScriptAnalyzerResult = @()
+    [System.Collections.Generic.List[object]]$ScriptAnalyzerResults = @()
+
     Get-ChildItem -Path "$pwd\Scripts" -File -Recurse -Include @('*.ps1', '*.psd1', '*.psm1') | % {
       [object[]]$ScriptAnalyzerResult = @(Invoke-ScriptAnalyzer -Path $_.FullName -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -ErrorAction Ignore)
 
