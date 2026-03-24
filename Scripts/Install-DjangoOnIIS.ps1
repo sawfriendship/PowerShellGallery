@@ -36,7 +36,7 @@ $SiteName = $SiteName -replace '\s*'
 
 Set-Alias -Name 'pyexe' -Value $PythonEXE
 $v = pyexe -V
-Write-Host $v -ForegroundColor Green
+Write-Verbose -Message $v
 
 if ($AddToHostsFile) {
     Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "127.0.0.1 `t $SiteName"

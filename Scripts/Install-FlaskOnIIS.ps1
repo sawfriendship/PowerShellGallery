@@ -52,7 +52,7 @@ $VerbosePreference = 'Continue'
 $SiteName = $SiteName -replace '\s*'
 
 $v = py -V
-Write-Host $v -ForegroundColor Green
+Write-Verbose -Message $v
 
 if ($Add2Hosts) {
     Add-Content -Path C:\Windows\System32\drivers\etc\hosts -Value "127.0.0.1 `t $SiteName"
@@ -76,7 +76,7 @@ $Features = @(
 )
 
 $Features | ? { $_ -notin $InstalledFeatures.Name } | % {
-    Write-Host "Install Feature '$_'" -ForegroundColor Yellow
+    Write-Verbose -Message "Install Feature '$_'"
     Dism.exe /Online /English /Enable-Feature:$_
 }
 
