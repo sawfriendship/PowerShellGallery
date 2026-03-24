@@ -30,6 +30,8 @@ param (
     [switch]$Http2Https
 )
 
+$VerbosePreference = 'Continue'
+
 $SiteName = $SiteName -replace '\s*'
 
 Set-Alias -Name 'pyexe' -Value $PythonEXE
@@ -58,7 +60,7 @@ $Features = @(
 )
 
 $Features | ? { $_ -notin $InstalledFeatures.Name } | % {
-    Write-Host "Install Feature '$_'" -ForegroundColor Yellow
+    Write-Verbose -Message "Install Feature '$_'"
     Dism.exe /Online /English /Enable-Feature:$_
 }
 
