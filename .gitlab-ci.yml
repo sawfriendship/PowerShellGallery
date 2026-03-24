@@ -1,6 +1,7 @@
 ﻿stages:
-  - linter
+  - lint-modules
   - deploy-module
+  - lint-scripts
   - deploy-script
 
 lint-modules:
