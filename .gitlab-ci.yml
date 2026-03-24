@@ -7,17 +7,23 @@ stages:
 variables:
   RUNNER: APP
 
-.extends:
-  tags: [$RUNNER]
-
 job-lint-modules:
   stage: lint-modules
   rules:
     - changes: [Modules/**]
-  extends: [.extends]
+  tags: [$RUNNER]
   script: |
     [object[]]$ScriptAnalyzerResult = @()
-    [System.Collections.Generic.List[object]]$ScriptAnalyzerResults = [System.Collections.Generic.List[object]]::new()
+    [System.Collections.Generic.List[object]]$ScriptAnalyzerResults = @()
+
+    [hashtable]$AnalyzerRuleMap = Get-ScriptAnalyzerRule | Select-Object -Property @(
+      , 'RuleName'
+      , 'CommonName'
+      , 'Description'
+      , @{Name = 'ImplementingTypeName'; Expression = { $_.ImplementingType.Name } }
+      , @{Name = 'Source'; Expression = { "https://github.com/PowerShell/PSScriptAnalyzer/blob/main/Rules/$($_.ImplementingType.Name).cs" } }
+      , @{Name = 'Docs'; Expression = { "https://github.com/PowerShell/PSScriptAnalyzer/blob/main/docs/Rules/$($_.ImplementingType.Name).md" } }
+    ) | % -Begin { $h = @{} } -Process { $h[$_.RuleName] = $_ } -End { $h }
 
     Get-ChildItem -Path "$pwd\Modules" -File -Recurse -Include @('*.ps1', '*.psd1', '*.psm1') | % {
       [object[]]$ScriptAnalyzerResult = @(Invoke-ScriptAnalyzer -Path $_.FullName -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -ErrorAction Ignore)
@@ -32,6 +38,16 @@ job-lint-modules:
       }
     }
 
+    $ScriptAnalyzerResults | Select-Object -Property @(
+      , @{Name = 'ScriptPath'; Expression = { $_.ScriptPath.Replace($PWD, '') } }
+      , @{Name = 'Position'; Expression = { "Line: $($_.Line), Column: $($_.Column), Message: $($_.Message)" } }
+      , @{Name = 'Rule'; Expression = { "ImplementingTypeName: $($AnalyzerRuleMap[$_.RuleName].ImplementingTypeName), RuleName: $($_.RuleName), Severity: $($_.Severity) " } }
+      , @{Name = 'CommonName'; Expression = { $AnalyzerRuleMap[$_.RuleName].CommonName } }
+      , @{Name = 'Description'; Expression = { $AnalyzerRuleMap[$_.RuleName].Description } }
+      , @{Name = 'Source'; Expression = { $AnalyzerRuleMap[$_.RuleName].Source } }
+      , @{Name = 'Docs'; Expression = { $AnalyzerRuleMap[$_.RuleName].Docs } }
+    ) | Format-List
+
     if ($ScriptAnalyzerResults) {
       throw "❌ Total Error Count: $($ScriptAnalyzerResults.Count)"
     } else {
@@ -44,7 +60,7 @@ job-deploy-module:
   rules:
     - changes: [Modules/**]
       if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  extends: [.extends]
+  tags: [$RUNNER]
   script: |
     Get-PSRepository | ft Name,SourceLocation
     $ImportedModules = "$pwd\Modules" | Get-ChildItem -Directory | % {Get-ChildItem -Path $_.FullName -Filter '*.psd1'} | % {Import-Module $_.FullName -Prefix 'zzz' -DisableNameChecking -PassThru -Force}
@@ -70,8 +86,20 @@ job-lint-scripts:
   stage: lint-scripts
   rules:
     - changes: [Scripts/**]
-  extends: [.extends]
+  tags: [$RUNNER]
   script: |
+    [object[]]$ScriptAnalyzerResult = @()
+    [System.Collections.Generic.List[object]]$ScriptAnalyzerResults = @()
+
+    [hashtable]$AnalyzerRuleMap = Get-ScriptAnalyzerRule | Select-Object -Property @(
+      , 'RuleName'
+      , 'CommonName'
+      , 'Description'
+      , @{Name = 'ImplementingTypeName'; Expression = { $_.ImplementingType.Name } }
+      , @{Name = 'Source'; Expression = { "https://github.com/PowerShell/PSScriptAnalyzer/blob/main/Rules/$($_.ImplementingType.Name).cs" } }
+      , @{Name = 'Docs'; Expression = { "https://github.com/PowerShell/PSScriptAnalyzer/blob/main/docs/Rules/$($_.ImplementingType.Name).md" } }
+    ) | % -Begin { $h = @{} } -Process { $h[$_.RuleName] = $_ } -End { $h }
+
     Get-ChildItem -Path "$pwd\Scripts" -File -Recurse -Include @('*.ps1', '*.psd1', '*.psm1') | % {
       [object[]]$ScriptAnalyzerResult = @(Invoke-ScriptAnalyzer -Path $_.FullName -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -ErrorAction Ignore)
 
@@ -85,6 +113,16 @@ job-lint-scripts:
       }
     }
 
+    $ScriptAnalyzerResults | Select-Object -Property @(
+      , @{Name = 'ScriptPath'; Expression = { $_.ScriptPath.Replace($PWD, '') } }
+      , @{Name = 'Position'; Expression = { "Line: $($_.Line), Column: $($_.Column), Message: $($_.Message)" } }
+      , @{Name = 'Rule'; Expression = { "ImplementingTypeName: $($AnalyzerRuleMap[$_.RuleName].ImplementingTypeName), RuleName: $($_.RuleName), Severity: $($_.Severity) " } }
+      , @{Name = 'CommonName'; Expression = { $AnalyzerRuleMap[$_.RuleName].CommonName } }
+      , @{Name = 'Description'; Expression = { $AnalyzerRuleMap[$_.RuleName].Description } }
+      , @{Name = 'Source'; Expression = { $AnalyzerRuleMap[$_.RuleName].Source } }
+      , @{Name = 'Docs'; Expression = { $AnalyzerRuleMap[$_.RuleName].Docs } }
+    ) | Format-List
+
     if ($ScriptAnalyzerResults) {
       throw "❌ Total Error Count: $($ScriptAnalyzerResults.Count)"
     } else {
@@ -97,7 +135,7 @@ job-deploy-script:
   rules:
     - changes: [Scripts/**]
       if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-  extends: [.extends]
+  tags: [$RUNNER]
   script: |
     $Scripts = Get-ChildItem -Path "$pwd\Scripts\*.ps1"
     $Scripts | Select-Object -Property @(

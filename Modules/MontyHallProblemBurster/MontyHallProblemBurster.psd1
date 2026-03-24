@@ -12,7 +12,7 @@
     RootModule = 'MontyHallProblemBurster.psm1'
 
     # Version number of this module.
-    ModuleVersion = '1.0.5'
+    ModuleVersion = '1.0.6'
 
     # ID used to uniquely identify this module
     GUID = 'b9332894-7582-41bc-97ff-29f753d18c6f'
