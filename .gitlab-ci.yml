@@ -4,12 +4,17 @@ stages:
   - lint-scripts
   - deploy-script
 
-lint-modules:
+variables:
+  RUNNER: APP
+
+.extends:
+  tags: [$RUNNER]
+
+job-lint-modules:
   stage: lint-modules
-  tags: [APP]
   rules:
-    - changes:
-        - Modules/**
+    - changes: [Modules/**]
+  extends: [.extends]
   script: |
     [object[]]$ScriptAnalyzerResult = @()
     [System.Collections.Generic.List[object]]$ScriptAnalyzerResults = [System.Collections.Generic.List[object]]::new()
@@ -30,17 +35,16 @@ lint-modules:
     if ($ScriptAnalyzerResults) {
       throw "❌ Total Error Count: $($ScriptAnalyzerResults.Count)"
     } else {
-        Write-Verbose -Verbose -Message "✅ Total Error Count: $($ScriptAnalyzerResults.Count)"
+      Write-Verbose -Verbose -Message "✅ Total Error Count: $($ScriptAnalyzerResults.Count)"
     }
 
-deploy-module:
+job-deploy-module:
   stage: deploy-module
-  needs: [lint-modules]
-  tags: [APP]
+  needs: [job-lint-modules]
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - Modules/**
+    - changes: [Modules/**]
+      if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  extends: [.extends]
   script: |
     Get-PSRepository | ft Name,SourceLocation
     $ImportedModules = "$pwd\Modules" | Get-ChildItem -Directory | % {Get-ChildItem -Path $_.FullName -Filter '*.psd1'} | % {Import-Module $_.FullName -Prefix 'zzz' -DisableNameChecking -PassThru -Force}
@@ -62,12 +66,11 @@ deploy-module:
       ) | fl
     }
 
-lint-scripts:
+job-lint-scripts:
   stage: lint-scripts
-  tags: [APP]
   rules:
-    - changes:
-        - Scripts/**
+    - changes: [Scripts/**]
+  extends: [.extends]
   script: |
     Get-ChildItem -Path "$pwd\Scripts" -File -Recurse -Include @('*.ps1', '*.psd1', '*.psm1') | % {
       [object[]]$ScriptAnalyzerResult = @(Invoke-ScriptAnalyzer -Path $_.FullName -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -ErrorAction Ignore)
@@ -88,14 +91,13 @@ lint-scripts:
         Write-Verbose -Verbose -Message "✅ Total Error Count: $($ScriptAnalyzerResults.Count)"
     }
 
-deploy-script:
+job-deploy-script:
   stage: deploy-script
-  needs: [lint-scripts]
-  tags: [APP]
+  needs: [job-lint-scripts]
   rules:
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
-      changes:
-        - Scripts/**
+    - changes: [Scripts/**]
+      if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+  extends: [.extends]
   script: |
     $Scripts = Get-ChildItem -Path "$pwd\Scripts\*.ps1"
     $Scripts | Select-Object -Property @(

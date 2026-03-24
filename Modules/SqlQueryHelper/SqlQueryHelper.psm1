@@ -5,7 +5,7 @@ $qq = "''"
 [System.Management.Automation.PSObject].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Add('StringList', 'System.Collections.Generic.List[System.String]')
 # [System.Management.Automation.PSObject].Assembly.GetType('System.Management.Automation.TypeAccelerators')::Add('ObjectList', 'System.Collections.Generic.List[System.Object]')
 
-Function Invoke-SqlCommand {
+function Invoke-SqlCommand {
     <#
 .EXAMPLE
 Invoke-SqlCommand -Server sql -Database test1 -Query "SELECT Name,ServiceName FROM ps WHERE Name LIKE '%time%'"
@@ -27,13 +27,13 @@ W32Time       W32Time
         , [switch]$OnlyShowQuery
         , [switch]$Raw
     )
-    Begin {
+    begin {
         $Counter = 1
 
         $SqlConnectionStringBuilderProperties = @{
-            InitialCatalog      = $Database
-            DataSource          = $Server
-            IntegratedSecurity  = $true
+            InitialCatalog = $Database
+            DataSource = $Server
+            IntegratedSecurity = $true
             PersistSecurityInfo = $true
         }
 
@@ -49,7 +49,7 @@ W32Time       W32Time
         $SqlDataAdapter = New-Object -TypeName System.Data.SqlClient.SqlDataAdapter -Property @{ `
                 SelectCommand = New-Object -TypeName System.Data.SqlClient.SqlCommand -Property @{ `
                     CommandTimeout = $CommandTimeout; `
-                    Connection     = New-Object -TypeName System.Data.SqlClient.SqlConnection -Property @{ `
+                    Connection = New-Object -TypeName System.Data.SqlClient.SqlConnection -Property @{ `
                         ConnectionString = $ConnectionString; `
 
                 }
@@ -60,7 +60,7 @@ W32Time       W32Time
             $SqlDataAdapter.SelectCommand.Connection.Open()
         }
     }
-    Process {
+    process {
         $Query | % {
             if (!$OnlyShowQuery) {
                 Write-Verbose -Message "ConnectionState: $($SqlDataAdapter.SelectCommand.Connection.State)"
@@ -70,8 +70,7 @@ W32Time       W32Time
 
             if ($OnlyShowQuery) {
                 $_
-            }
-            else {
+            } else {
                 $SqlDataAdapter.SelectCommand.CommandText = $_
                 $DataSet = New-Object -TypeName System.Data.DataSet
                 $RowCount = $SqlDataAdapter.Fill($DataSet)
@@ -80,22 +79,21 @@ W32Time       W32Time
                 Write-Debug -Message "ConnectionString: '$ConnectionString'"
                 if ($Raw) {
                     $DataSet
-                }
-                else {
+                } else {
                     $DataSet.Tables | % { $_.Rows }
                 }
             }
             $Counter++
         }
     }
-    End {
+    end {
         if ($SqlDataAdapter.SelectCommand.Connection.State -ne [System.Data.ConnectionState]::Closed) {
             $SqlDataAdapter.SelectCommand.Connection.Close()
         }
     }
 }
 
-Function Add-SqlTable {
+function Add-SqlTable {
     <#
 .EXAMPLE
 Get-Service | Create-SqlTable -Server sql -Database [test1] -Table [ps] -OnlyShowQuery
@@ -135,7 +133,7 @@ CREATE TABLE ps (
         , [switch]$OnlyShowQuery
     )
 
-    Begin {
+    begin {
         $PSBoundParameters.Keys | ? { $PassThruSqlcmdParam.Contains($_) } | % -Begin { $SqlQueryParam = @{} } -Process { $SqlQueryParam[$_] = $PSBoundParameters[$_] }
         $InputObjects = New-Object -TypeName System.Collections.ArrayList
         $Properties = New-Object -TypeName System.Collections.ArrayList
@@ -144,7 +142,7 @@ CREATE TABLE ps (
         [string]$TabChar = [string][char]9
         $PSBoundParameters.Keys | ? { $('StringReserveMultiple', 'TruncateString').Contains($_) } | % -Begin { $ImportDataParam = @{} } -Process { $ImportDataParam[$_] = $PSBoundParameters[$_] }
     }
-    Process {
+    process {
         $InputObject | % {
             [void]$InputObjects.Add($_)
 
@@ -155,7 +153,7 @@ CREATE TABLE ps (
             }
         }
     }
-    End {
+    end {
         $TableTypes = $InputObjects | Select-Object -Property $Properties | ConvertTo_HashTable | Import_Data -CreateTable @ImportDataParam
         $Types = $TableTypes.Types
         $Query = $Properties | % -Begin {
@@ -176,7 +174,7 @@ CREATE TABLE ps (
     }
 }
 
-Function Add-SqlRecord {
+function Add-SqlRecord {
     <#
 .EXAMPLE
 Get-Service | select -f 3 | Insert-SqlRecord -Server sql -Database test1 -Table ps -PassThru | select Name,ServiceName
@@ -230,7 +228,7 @@ INSERT W32Time
         , [switch]$OnlyShowQuery
     )
 
-    Begin {
+    begin {
         $PSBoundParameters.Keys | ? { $PassThruSqlcmdParam.Contains($_) } | % -Begin { $SqlQueryParam = @{} } -Process { $SqlQueryParam[$_] = $PSBoundParameters[$_] }
         $PSBoundParameters.Keys -like 'SkipNull*' | % -Begin { $ConvertToHashTableParam = @{} } -Process { $ConvertToHashTableParam[$_] = [bool]($PSBoundParameters[$_].IsPresent) }
         if ($PSBoundParameters.ContainsKey('Property')) { $ConvertToHashTableParam['Property'] = $Property }
@@ -238,23 +236,20 @@ INSERT W32Time
         $OUTPUT = @{$true = 'OUTPUT INSERTED.*'; $false = '' }[$PSBoundParameters.ContainsKey('PassThru')]
         if ($Limit) {
             $RowCount = "SET ROWCOUNT $Limit;"
-        }
-        else {
+        } else {
             $RowCount = ''
         }
     }
 
-    Process {
+    process {
         $InputObject | % {
             if ($_.psobject.TypeNames -like '*System.Collections*') {
                 if (!$ConvertToHashTableParam.Count) {
                     $Data = $_
-                }
-                else {
+                } else {
                     $Data = New-Object -TypeName PSCustomObject -Property $_ | ConvertTo_HashTable @ConvertToHashTableParam
                 }
-            }
-            else {
+            } else {
                 $Data = $_ | ConvertTo_HashTable @ConvertToHashTableParam
             }
 
@@ -264,19 +259,18 @@ INSERT W32Time
 
             if ($DataKeys) {
                 $columns = $DataKeys -join '],['
-                $values = $DataValues -join ","
+                $values = $DataValues -join ','
                 Invoke-SqlCommand @SqlQueryParam -Query "$RowCount INSERT INTO $Table ([$columns]) $OUTPUT VALUES ($values)"
-            }
-            else {
+            } else {
                 Write-Warning -Message "null data object: $($_ | ConvertTo-Json -Compress)"
             }
         }
     }
 
-    End {}
+    end {}
 }
 
-Function Edit-SqlRecord {
+function Edit-SqlRecord {
     <#
 .EXAMPLE
 Get-Service | ? {!$_.DependentServices} | select -f 3 -p Name,ServiceName,DependentServices | % {Update-SqlRecord -Server sql -Database test1 -Table ps -Data $_ -Filter @{ServiceName = $_.ServiceName} -PassThru -SkipNullOrWhiteSpace}
@@ -321,7 +315,7 @@ Get-Service | ? {!$_.DependentServices} | select -f 3 -p Name,ServiceName,Depend
         , [switch]$OnlyShowQuery
     )
 
-    Begin {
+    begin {
         $PSBoundParameters.Keys | ? { $PassThruSqlcmdParam.Contains($_) } | % -Begin { $SqlQueryParam = @{} } -Process { $SqlQueryParam[$_] = $PSBoundParameters[$_] }
         $PSBoundParameters.Keys -like 'SkipNull*' | % -Begin { $ConvertToHashTableParam = @{} } -Process { $ConvertToHashTableParam[$_] = [bool]($PSBoundParameters[$_].IsPresent) }
         if ($PSBoundParameters.ContainsKey('Property')) { $ConvertToHashTableParam['Property'] = $Property }
@@ -329,25 +323,22 @@ Get-Service | ? {!$_.DependentServices} | select -f 3 -p Name,ServiceName,Depend
         $OUTPUT = @{$true = @{UPDATE = "OUTPUT 'UPDATE' AS [ACTION], INSERTED.*"; INSERT = "OUTPUT 'INSERT' AS [ACTION], INSERTED.*" }; $false = @{} }[$PSBoundParameters.ContainsKey('PassThru')]
         if ($Limit) {
             $RowCount = "SET ROWCOUNT $Limit;"
-        }
-        else {
+        } else {
             $RowCount = ''
         }
 
         [string[]]$Queries = @()
     }
 
-    Process {
+    process {
         $InputObject | % {
             if ($_.psobject.TypeNames -like 'System.Collections.*') {
                 if (!$ConvertToHashTableParam.Count) {
                     $Data = $_
-                }
-                else {
+                } else {
                     $Data = New-Object -TypeName PSCustomObject -Property $_ | ConvertTo_HashTable @ConvertToHashTableParam
                 }
-            }
-            else {
+            } else {
                 $Data = $_ | ConvertTo_HashTable @ConvertToHashTableParam
             }
 
@@ -356,7 +347,7 @@ Get-Service | ? {!$_.DependentServices} | select -f 3 -p Name,ServiceName,Depend
             $DataValues = $iData.Values
 
             $columns = $DataKeys -join '],['
-            $values = $DataValues -join ","
+            $values = $DataValues -join ','
 
             [string[]]$sets = @()
             for ($i = 0; $i -lt $DataKeys.Count; $i++) {
@@ -379,32 +370,29 @@ Get-Service | ? {!$_.DependentServices} | select -f 3 -p Name,ServiceName,Depend
                 }
 
                 $where = $wheres -join " $FilterCondition "
-            }
-            else {
+            } else {
                 $where = $FilterString
             }
 
             if ($InsertIfNotFound) {
                 $Query = "$RowCount UPDATE $Table SET $set $($OUTPUT['UPDATE']) WHERE $where IF @@ROWCOUNT = 0 INSERT INTO $Table ([$columns]) $($OUTPUT['INSERT']) VALUES ($values)"
-            }
-            else {
+            } else {
                 $Query = "$RowCount UPDATE $Table SET $set $($OUTPUT['UPDATE']) WHERE $where"
             }
             if ($DataKeys) {
                 $Queries += $Query
-            }
-            else {
+            } else {
                 Write-Warning -Message "null data object: $($_ | ConvertTo-Json -Compress)"
             }
         }
     }
 
-    End {
+    end {
         Invoke-SqlCommand @SqlQueryParam -Query $Queries
     }
 }
 
-Function Remove-SqlRecord {
+function Remove-SqlRecord {
     <#
 .EXAMPLE
 Remove-SqlRecord -Server sql -SqlDatabase test1 -SqlTable ps -Filter @{ServiceName = 'w32time'} -PassThru -OnlyShowQuery
@@ -441,8 +429,7 @@ W32Time                   False               False       False                 
 
     if ($Limit) {
         $RowCount = "SET ROWCOUNT $Limit;"
-    }
-    else {
+    } else {
         $RowCount = ''
     }
 
@@ -462,16 +449,14 @@ W32Time                   False               False       False                 
         }
 
         $where = $wheres -join " $FilterCondition "
-    }
-    else {
+    } else {
         $where = $FilterString
     }
 
     Invoke-SqlCommand @SqlQueryParam -Query "$RowCount DELETE $Table $OUTPUT WHERE $where"
-
 }
 
-Function Get-SqlRecord {
+function Get-SqlRecord {
     <#
 .EXAMPLE
 Get-SqlRecord -Server sql -SqlDatabase test1 -SqlTable ps -Filter @{Name = 'win*'}
@@ -543,15 +528,13 @@ Get-SqlRecord -Server sql -SqlDatabase test1 -SqlTable ps -Property Status,'COUN
 
     if ($Top) {
         $Count = "TOP $Top"
-    }
-    else {
+    } else {
         $Count = ''
     }
 
     if ($Limit) {
         $RowCount = "SET ROWCOUNT $Limit;"
-    }
-    else {
+    } else {
         $RowCount = ''
     }
 
@@ -559,8 +542,7 @@ Get-SqlRecord -Server sql -SqlDatabase test1 -SqlTable ps -Property Status,'COUN
 
     if ($SortBy) {
         $SortString = " ORDER BY $SortBy $SortDirection"
-    }
-    else {
+    } else {
         $SortString = ''
     }
 
@@ -570,8 +552,7 @@ Get-SqlRecord -Server sql -SqlDatabase test1 -SqlTable ps -Property Status,'COUN
 
     if ($GroupBy -and $Having) {
         $Having = "HAVING $Having"
-    }
-    else {
+    } else {
         $Having = ''
     }
 
@@ -589,39 +570,35 @@ Get-SqlRecord -Server sql -SqlDatabase test1 -SqlTable ps -Property Status,'COUN
         }
 
         $where = 'WHERE ' + ($wheres -join " $FilterCondition ")
-    }
-    elseif ($FilterString) {
+    } elseif ($FilterString) {
         $where = 'WHERE ' + $FilterString
-    }
-    else {
+    } else {
         $where = ''
     }
 
     Invoke-SqlCommand @SqlQueryParam -Query "$RowCount SELECT $Count $RowNumber $Properties FROM $Table $where $SortString $GroupBy $Having"
-
 }
 
-Filter ConvertTo_HashTable {
+filter ConvertTo_HashTable {
     param(
         [System.Array]$Property = @()
         , [System.Array]$ExcludeProperty = @()
         , [switch]$SkipNullOrEmpty
         , [switch]$SkipNullOrWhiteSpace
     )
-    Begin {
+    begin {
         $paramSelect = @{'ErrorAction' = 'SilentlyContinue' }
         if ($Property) { $paramSelect['Property'] = $Property }
         if ($ExcludeProperty) { $paramSelect['ExcludeProperty'] = $ExcludeProperty }
         $Skip = ($SkipNullOrEmpty -or $SkipNullOrWhiteSpace)
     }
-    Process {
+    process {
         $Hash = @{}
         if (!$Skip) {
             $_ | Select-Object @paramSelect | % { $_.psobject.Properties } | % {
                 $Hash[$_.Name] = $_.Value
             }
-        }
-        else {
+        } else {
             $_ | Select-Object @paramSelect | % { $_.psobject.Properties } | % {
                 if (!(($SkipNullOrEmpty -and [string]::IsNullOrEmpty($_.Value)) -or ($SkipNullOrWhiteSpace -and [string]::IsNullOrWhiteSpace($_.Value)))) {
                     $Hash[$_.Name] = $_.Value
@@ -630,10 +607,10 @@ Filter ConvertTo_HashTable {
         }
         $Hash
     }
-    End {}
+    end {}
 }
 
-Function Import_Data {
+function Import_Data {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory = $true, ValueFromPipeline = $true)]
@@ -645,50 +622,45 @@ Function Import_Data {
         , [switch]$CreateTable
     )
 
-    Begin {
+    begin {
         $Types = @{}
 
         $TypeMap = @{
-            'System.Int32'   = 'int'
-            'System.Int64'   = 'bigint'
-            'System.Single'  = 'float'
-            'System.Double'  = 'float'
+            'System.Int32' = 'int'
+            'System.Int64' = 'bigint'
+            'System.Single' = 'float'
+            'System.Double' = 'float'
             'System.Decimal' = 'float'
         }
 
-        Filter ConvertTo-Json_ {
+        filter ConvertTo-Json_ {
             param(
                 [switch]$Compress
             )
-            Begin { $Strings = New-Object -TypeName System.Collections.ArrayList }
-            Process {
+            begin { $Strings = New-Object -TypeName System.Collections.ArrayList }
+            process {
                 $String = if ($_.psobject.TypeNames -like 'System.Collections.*') {
                     $_.GetEnumerator() | % -Begin { $Hash = @{} } -Process { $Hash[$_.Name.ToString()] = $_.Value } -End { ConvertTo-Json @PSBoundParameters -InputObject $Hash }
-                }
-                elseif ($_.psobject.TypeNames -like 'System.DateTime') {
+                } elseif ($_.psobject.TypeNames -like 'System.DateTime') {
                     ConvertTo-Json @PSBoundParameters -InputObject $_.ToString('yyyy-MM-ddTHH:mm:ss.fff')
-                }
-                elseif (!($_.psobject.TypeNames -like 'System.ValueType') -and !($_.psobject.TypeNames -like 'System.String')) {
+                } elseif (!($_.psobject.TypeNames -like 'System.ValueType') -and !($_.psobject.TypeNames -like 'System.String')) {
                     $_.psobject.Properties | % -Begin { $Hash = @{} } -Process { $Hash[$_.Name.ToString()] = $_.Value } -End { ConvertTo-Json @PSBoundParameters -InputObject $Hash }
-                }
-                else {
+                } else {
                     ConvertTo-Json @PSBoundParameters -InputObject $_.ToString()
                 }
                 [void]$Strings.Add($String)
             }
-            End {
+            end {
                 if ($Strings.Count -ge 1) {
                     '[' + ($Strings -join ',') + ']'
-                }
-                else {
+                } else {
                     $Strings
                 }
             }
         }
-
     }
 
-    Process {
+    process {
         $HashTable | % {
             $_HashTable = $_
             $Keys = $_HashTable.Keys
@@ -699,37 +671,29 @@ Function Import_Data {
 
                 try {
                     $Type = $Value.GetType()
-                }
-                catch {
+                } catch {
                     $Type = $null
                 }
 
                 if (!$Type -or $null -eq $Value -or $Value.GetType() -eq [System.DBNull]) {
                     $_Value = 'NULL'
-                }
-                elseif ($Value.GetType() -in @([int], [int64])) {
+                } elseif ($Value.GetType() -in @([int], [int64])) {
                     $_Value = $Value
-                }
-                elseif ($Value.GetType() -in @([Float], [Double], [Decimal])) {
+                } elseif ($Value.GetType() -in @([Float], [Double], [Decimal])) {
                     [string]$_Value = $Value.ToString().Replace(',', '.')
-                }
-                elseif ($Value -is [bool]) {
+                } elseif ($Value -is [bool]) {
                     $quote = $true
                     [string]$_Value = $Value
-                }
-                elseif ($Value -is [DateTime]) {
+                } elseif ($Value -is [DateTime]) {
                     $quote = $true
                     [string]$_Value = $Value.ToString('yyyy-MM-ddTHH:mm:ss.fff')
-                }
-                elseif ($Value.psobject.TypeNames -like '*System.Collections*' -or $Value.psobject.TypeNames -like '*System.Array*') {
+                } elseif ($Value.psobject.TypeNames -like '*System.Collections*' -or $Value.psobject.TypeNames -like '*System.Array*') {
                     $quote = $true
                     [string]$_Value = $Value | ConvertTo-Json_ -Compress
-                }
-                elseif (!($Value.psobject.TypeNames -like 'System.ValueType') -and !($Value.psobject.TypeNames -like 'System.String')) {
+                } elseif (!($Value.psobject.TypeNames -like 'System.ValueType') -and !($Value.psobject.TypeNames -like 'System.String')) {
                     $quote = $true
                     [string]$_Value = $Value | ConvertTo-Json_ -Compress
-                }
-                else {
+                } else {
                     $quote = $true
                     [string]$_Value = $Value
                 }
@@ -745,17 +709,16 @@ Function Import_Data {
                 if ($CreateTable) {
                     if (!$Types.ContainsKey($Key)) {
                         $Types[$Key] = @{
-                            Type      = $null
-                            Length    = 0
+                            Type = $null
+                            Length = 0
                             AllowNull = $false
-                            MaxValue  = 0
+                            MaxValue = 0
                         }
                     }
 
                     if (!$Type -or $null -eq $Value -or $Value.GetType() -eq [System.DBNull]) {
                         $Types[$Key]['AllowNull'] = $true
-                    }
-                    else {
+                    } else {
                         if ($Type -in @([int], [int64], [Float], [Double], [Decimal])) {
                             if (!$Types[$Key]['Type'] -or !$Types[$Key]['MaxValue']) {
                                 $Types[$Key]['MaxValue'] = [System.Int32]::MaxValue
@@ -765,20 +728,17 @@ Function Import_Data {
                                 $Types[$Key]['MaxValue'] = $Type::MaxValue
                                 $Types[$Key]['Type'] = $TypeMap[$Type.FullName]
                             }
-                        }
-                        elseif ($Value -is [DateTime]) {
+                        } elseif ($Value -is [DateTime]) {
                             if (!$Types[$Key]['Type']) {
                                 $Types[$Key]['Type'] = 'date'
                             }
                             if ($Value.TimeOfDay.TotalSeconds -ne 0 -and $Types[$Key]['Type'] -eq 'date') {
                                 $Types[$Key]['Type'] = 'datetime'
                             }
-                        }
-                        elseif ($Value.psobject.TypeNames -like '*System.Collections*' -or $Value.psobject.TypeNames -like '*System.Array*') {
+                        } elseif ($Value.psobject.TypeNames -like '*System.Collections*' -or $Value.psobject.TypeNames -like '*System.Array*') {
                             $Types[$Key]['Length'] = 4000
                             $Types[$Key]['Type'] = 'nvarchar(MAX)'
-                        }
-                        else {
+                        } else {
                             $TrimLength = $_Value.Trim($q).Length
 
                             [int]$Length = $TrimLength * $StringReserveMultiple
@@ -788,14 +748,11 @@ Function Import_Data {
                                     $Types[$Key]['Length'] = $Length
                                     $Types[$Key]['Type'] = "nvarchar($Length)"
                                 }
-                            }
-                            else {
+                            } else {
                                 $Types[$Key]['Length'] = 4000
                                 $Types[$Key]['Type'] = 'nvarchar(MAX)'
                             }
                         }
-
-
                     }
 
                     $Types.GetEnumerator() | % {
@@ -815,11 +772,11 @@ Function Import_Data {
         }
     }
 
-    End {
+    end {
         [PSCustomObject]@{
-            Keys   = [string[]]$Keys
+            Keys = [string[]]$Keys
             Values = [string[]]$Values
-            Types  = $Types
+            Types = $Types
         }
     }
 }
