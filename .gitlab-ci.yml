@@ -31,6 +31,26 @@ lint-modules:
       throw "❌ Total Error Count: $($ScriptAnalyzerResults.Count)"
     } else {
         Write-Verbose -Verbose -Message "✅ Total Error Count: $($ScriptAnalyzerResults.Count)"
+    [object[]]$ScriptAnalyzerResult = @()
+    [System.Collections.Generic.List[object]]$ScriptAnalyzerResults = [System.Collections.Generic.List[object]]::new()
+
+    Get-ChildItem -Path "$pwd\Modules" -File -Recurse -Include @('*.ps1', '*.psd1', '*.psm1') | % {
+      [object[]]$ScriptAnalyzerResult = @(Invoke-ScriptAnalyzer -Path $_.FullName -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -ErrorAction Ignore)
+
+      $Message = "ErrorCount: $($ScriptAnalyzerResult.Count), File: $($_.FullName.Replace($PWD,'.'))"
+
+      if ($ScriptAnalyzerResult) {
+        $ScriptAnalyzerResults.AddRange($ScriptAnalyzerResult)
+        Write-Warning -Message "❌ $Message"
+      } else {
+        Write-Verbose -Message "✅ $Message" -Verbose
+      }
+    }
+
+    if ($ScriptAnalyzerResults) {
+      throw "❌ Total Error Count: $($ScriptAnalyzerResults.Count)"
+    } else {
+        Write-Verbose -Verbose -Message "✅ Total Error Count: $($ScriptAnalyzerResults.Count)"
     }
 
 deploy-module:
