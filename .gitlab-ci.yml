@@ -16,6 +16,15 @@ job-lint-modules:
     [object[]]$ScriptAnalyzerResult = @()
     [System.Collections.Generic.List[object]]$ScriptAnalyzerResults = @()
 
+    [hashtable]$AnalyzerRuleMap = Get-ScriptAnalyzerRule | Select-Object -Property @(
+      , 'RuleName'
+      , 'CommonName'
+      , 'Description'
+      , @{Name = 'ImplementingTypeName'; Expression = { $_.ImplementingType.Name } }
+      , @{Name = 'Source'; Expression = { "https://github.com/PowerShell/PSScriptAnalyzer/blob/main/Rules/$($_.ImplementingType.Name).cs" } }
+      , @{Name = 'Docs'; Expression = { "https://github.com/PowerShell/PSScriptAnalyzer/blob/main/docs/Rules/$($_.ImplementingType.Name).md" } }
+    ) | % -Begin { $h = @{} } -Process { $h[$_.RuleName] = $_ } -End { $h }
+
     Get-ChildItem -Path "$pwd\Modules" -File -Recurse -Include @('*.ps1', '*.psd1', '*.psm1') | % {
       [object[]]$ScriptAnalyzerResult = @(Invoke-ScriptAnalyzer -Path $_.FullName -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -ErrorAction Ignore)
 
@@ -28,6 +37,16 @@ job-lint-modules:
         Write-Verbose -Message "✅ $Message" -Verbose
       }
     }
+
+    $ScriptAnalyzerResults | Select-Object -Property @(
+      , @{Name = 'ScriptPath'; Expression = { $_.ScriptPath.Replace($PWD, '') } }
+      , @{Name = 'Position'; Expression = { "Line: $($_.Line), Column: $($_.Column), Message: $($_.Message)" } }
+      , @{Name = 'Rule'; Expression = { "ImplementingTypeName: $($AnalyzerRuleMap[$_.RuleName].ImplementingTypeName), RuleName: $($_.RuleName), Severity: $($_.Severity) " } }
+      , @{Name = 'CommonName'; Expression = { $AnalyzerRuleMap[$_.RuleName].CommonName } }
+      , @{Name = 'Description'; Expression = { $AnalyzerRuleMap[$_.RuleName].Description } }
+      , @{Name = 'Source'; Expression = { $AnalyzerRuleMap[$_.RuleName].Source } }
+      , @{Name = 'Docs'; Expression = { $AnalyzerRuleMap[$_.RuleName].Docs } }
+    ) | Format-List
 
     if ($ScriptAnalyzerResults) {
       throw "❌ Total Error Count: $($ScriptAnalyzerResults.Count)"
@@ -72,6 +91,15 @@ job-lint-scripts:
     [object[]]$ScriptAnalyzerResult = @()
     [System.Collections.Generic.List[object]]$ScriptAnalyzerResults = @()
 
+    [hashtable]$AnalyzerRuleMap = Get-ScriptAnalyzerRule | Select-Object -Property @(
+      , 'RuleName'
+      , 'CommonName'
+      , 'Description'
+      , @{Name = 'ImplementingTypeName'; Expression = { $_.ImplementingType.Name } }
+      , @{Name = 'Source'; Expression = { "https://github.com/PowerShell/PSScriptAnalyzer/blob/main/Rules/$($_.ImplementingType.Name).cs" } }
+      , @{Name = 'Docs'; Expression = { "https://github.com/PowerShell/PSScriptAnalyzer/blob/main/docs/Rules/$($_.ImplementingType.Name).md" } }
+    ) | % -Begin { $h = @{} } -Process { $h[$_.RuleName] = $_ } -End { $h }
+
     Get-ChildItem -Path "$pwd\Scripts" -File -Recurse -Include @('*.ps1', '*.psd1', '*.psm1') | % {
       [object[]]$ScriptAnalyzerResult = @(Invoke-ScriptAnalyzer -Path $_.FullName -Settings "$pwd\PSScriptAnalyzerSettings.psd1" -ErrorAction Ignore)
 
@@ -84,6 +112,16 @@ job-lint-scripts:
         Write-Verbose -Message "✅ $Message" -Verbose
       }
     }
+
+    $ScriptAnalyzerResults | Select-Object -Property @(
+      , @{Name = 'ScriptPath'; Expression = { $_.ScriptPath.Replace($PWD, '') } }
+      , @{Name = 'Position'; Expression = { "Line: $($_.Line), Column: $($_.Column), Message: $($_.Message)" } }
+      , @{Name = 'Rule'; Expression = { "ImplementingTypeName: $($AnalyzerRuleMap[$_.RuleName].ImplementingTypeName), RuleName: $($_.RuleName), Severity: $($_.Severity) " } }
+      , @{Name = 'CommonName'; Expression = { $AnalyzerRuleMap[$_.RuleName].CommonName } }
+      , @{Name = 'Description'; Expression = { $AnalyzerRuleMap[$_.RuleName].Description } }
+      , @{Name = 'Source'; Expression = { $AnalyzerRuleMap[$_.RuleName].Source } }
+      , @{Name = 'Docs'; Expression = { $AnalyzerRuleMap[$_.RuleName].Docs } }
+    ) | Format-List
 
     if ($ScriptAnalyzerResults) {
       throw "❌ Total Error Count: $($ScriptAnalyzerResults.Count)"

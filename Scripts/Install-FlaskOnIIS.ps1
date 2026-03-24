@@ -47,6 +47,8 @@ param (
     [switch]$Http2Https
 )
 
+$VerbosePreference = 'Continue'
+
 $SiteName = $SiteName -replace '\s*'
 
 $v = py -V
